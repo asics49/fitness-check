@@ -40,12 +40,37 @@ body { font-family: 'Microsoft JhengHei', Arial, sans-serif; background: #f0f4f8
 }
 .topbar h1 { font-size: 18px; font-weight: 700; flex: 1; }
 .topbar .meta { font-size: 12px; opacity: .75; }
-.btn-reset {
-  background: rgba(255,255,255,.2); border: 1px solid rgba(255,255,255,.4);
-  color: white; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 13px;
-}
-.btn-reset:hover { background: rgba(255,255,255,.3); }
+.topbar-btns { display: flex; gap: 8px; }
+.btn { padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; border: none; font-family: inherit; }
+.btn-ghost { background: rgba(255,255,255,.2); border: 1px solid rgba(255,255,255,.4); color: white; }
+.btn-ghost:hover { background: rgba(255,255,255,.3); }
+.btn-green { background: #22c55e; color: white; }
+.btn-green:hover { background: #16a34a; }
+.btn-orange { background: #f97316; color: white; }
+.btn-orange:hover { background: #ea580c; }
+.btn-blue { background: #3b82f6; color: white; }
+.btn-blue:hover { background: #2563eb; }
 
+/* === PASS RATE BAR === */
+.pass-bar {
+  background: white; border-bottom: 1px solid #dde; padding: 12px 20px;
+  display: flex; gap: 12px; flex-wrap: wrap; align-items: center;
+}
+.pass-bar-title { font-size: 13px; font-weight: 700; color: #555; white-space: nowrap; }
+.pass-item {
+  display: flex; align-items: center; gap: 8px; background: #f8f9fb;
+  border-radius: 8px; padding: 8px 14px; min-width: 140px;
+}
+.pass-item .label { font-size: 12px; color: #666; }
+.pass-item .rate { font-size: 18px; font-weight: 700; }
+.pass-item .frac { font-size: 11px; color: #999; }
+.rate-high { color: #16a34a; }
+.rate-mid  { color: #d97706; }
+.rate-low  { color: #dc2626; }
+.pass-progress { height: 4px; border-radius: 2px; background: #e5e7eb; margin-top: 4px; }
+.pass-progress-fill { height: 100%; border-radius: 2px; transition: width .3s; }
+
+/* === GRADE TABS === */
 .grade-tabs {
   background: white; border-bottom: 1px solid #dde;
   display: flex; padding: 0 16px; overflow-x: auto;
@@ -57,33 +82,44 @@ body { font-family: 'Microsoft JhengHei', Arial, sans-serif; background: #f0f4f8
 .tab.active { color: #1a3a5c; border-bottom-color: #1a3a5c; font-weight: 700; }
 .tab:hover:not(.active) { color: #2e6da4; }
 
+/* === TOOLBAR === */
 .toolbar {
   background: white; padding: 10px 16px; border-bottom: 1px solid #eee;
   display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
 }
-.toolbar select { padding: 5px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; }
-.toolbar label { font-size: 13px; color: #555; display: flex; align-items: center; gap: 5px; }
+.toolbar select { padding: 5px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; font-family: inherit; }
+.toolbar label { font-size: 13px; color: #555; display: flex; align-items: center; gap: 5px; cursor: pointer; }
+.toolbar .sep { color: #ddd; font-size: 18px; }
+.mode-badge {
+  background: #fef3c7; border: 1px solid #fbbf24; color: #92400e;
+  padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600;
+  display: none;
+}
+.mode-badge.show { display: inline-flex; align-items: center; gap: 4px; }
 
-.stats { display: flex; gap: 10px; padding: 12px 16px; flex-wrap: wrap; }
+/* === STATS === */
+.stats { display: flex; gap: 10px; padding: 10px 16px; flex-wrap: wrap; }
 .stat-card {
-  background: white; border-radius: 8px; padding: 10px 16px; min-width: 110px;
+  background: white; border-radius: 8px; padding: 8px 14px; min-width: 100px;
   text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,.08);
 }
-.stat-card .val { font-size: 22px; font-weight: 700; color: #1a3a5c; }
-.stat-card .lbl { font-size: 11px; color: #888; margin-top: 2px; }
+.stat-card .val { font-size: 20px; font-weight: 700; color: #1a3a5c; }
+.stat-card .lbl { font-size: 11px; color: #888; margin-top: 1px; }
 .stat-card.warn .val { color: #c00; }
-.stat-card.good .val { color: #090; }
 .stat-card.warn { border-left: 3px solid #e55; }
+.stat-card.good .val { color: #090; }
 .stat-card.good { border-left: 3px solid #2a2; }
 
+/* === LEGEND === */
 .legend {
-  display: flex; gap: 16px; padding: 6px 16px 10px; flex-wrap: wrap;
+  display: flex; gap: 16px; padding: 6px 16px 8px; flex-wrap: wrap;
   font-size: 12px; align-items: center;
 }
 .legend-item { display: flex; align-items: center; gap: 5px; }
 .legend-box { width: 14px; height: 14px; border-radius: 3px; }
 
-.table-wrap { padding: 0 16px 24px; overflow-x: auto; }
+/* === TABLE === */
+.table-wrap { padding: 0 16px 80px; overflow-x: auto; }
 table {
   width: 100%; border-collapse: collapse; background: white; border-radius: 8px;
   overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.08); font-size: 13px;
@@ -94,7 +130,11 @@ thead th {
 }
 tbody tr:nth-child(even) { background: #f8f9fb; }
 tbody tr:hover { background: #e8f0fb; }
-td { padding: 7px 8px; text-align: center; border-bottom: 1px solid #eee; white-space: nowrap; }
+tbody tr.fail-row { background: #fff8f8; }
+tbody tr.fail-row:nth-child(even) { background: #fff0f0; }
+tbody tr.fail-row:hover { background: #ffe4e4; }
+tbody tr.edited { outline: 2px solid #fbbf24; outline-offset: -1px; }
+td { padding: 6px 8px; text-align: center; border-bottom: 1px solid #eee; white-space: nowrap; }
 td.tname { text-align: left; }
 .pr-cell { border-radius: 4px; padding: 2px 6px; font-size: 12px; font-weight: 600; display: inline-block; }
 .pr-low    { background: #ffcccc; color: #c00; }
@@ -102,13 +142,35 @@ td.tname { text-align: left; }
 .pr-mid    { background: #ffffcc; color: #880; }
 .pr-high   { background: #ccffcc; color: #050; }
 .pr-na     { color: #bbb; font-size: 11px; }
-.no-data   { text-align: center; padding: 48px; color: #aaa; }
+.fail-badge { background: #fee2e2; color: #dc2626; border-radius: 4px; padding: 1px 6px; font-size: 11px; font-weight: 600; }
+.pass-badge { background: #dcfce7; color: #16a34a; border-radius: 4px; padding: 1px 6px; font-size: 11px; font-weight: 600; }
+.no-data { text-align: center; padding: 48px; color: #aaa; }
 
-/* Loading */
+/* === EDIT MODE === */
+.edit-input {
+  width: 60px; padding: 2px 4px; border: 1px solid #f97316;
+  border-radius: 4px; font-size: 13px; text-align: center; font-family: inherit;
+  background: #fff7ed;
+}
+.edit-input:focus { outline: 2px solid #f97316; }
+.edit-input.run-input { width: 52px; }
+
+/* === DOWNLOAD PANEL === */
+.dl-panel {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: white; border-top: 2px solid #e5e7eb;
+  padding: 10px 20px; display: none; align-items: center; gap: 12px;
+  box-shadow: 0 -4px 16px rgba(0,0,0,.08); z-index: 100; flex-wrap: wrap;
+}
+.dl-panel.show { display: flex; }
+.dl-panel .dl-label { font-size: 13px; font-weight: 600; color: #555; }
+.dl-panel select { padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; font-family: inherit; }
+.dl-edited-count { font-size: 12px; color: #f97316; font-weight: 600; }
+
 #loadingMsg {
   position: fixed; inset: 0; background: rgba(255,255,255,.9);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 16px; color: #1a3a5c; z-index: 999; display: none;
+  display: none; align-items: center; justify-content: center;
+  font-size: 16px; color: #1a3a5c; z-index: 999;
 }
 </style>
 </head>
@@ -118,21 +180,20 @@ td.tname { text-align: left; }
 <div id="uploadScreen">
   <div class="upload-card">
     <h1>📊 體適能常模對照工具</h1>
-    <p>匯入各班成績檔案，自動對照教育部常模百分位，支援每學年重新匯入</p>
+    <p>匯入各班成績檔案，自動對照教育部常模百分位<br>支援每學年重新匯入、調整成績後下載</p>
     <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
         <path d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
       </svg>
       <p>點擊或拖曳檔案到此處</p>
-      <p style="margin-top:6px"><strong>支援 .xlsx / .xlsm / .csv</strong></p>
+      <p style="margin-top:6px"><strong>支援 .xlsx / .xlsm</strong></p>
     </div>
-    <input type="file" id="fileInput" accept=".xlsx,.xlsm,.csv" onchange="handleFile(this.files[0])">
+    <input type="file" id="fileInput" accept=".xlsx,.xlsm" onchange="handleFile(this.files[0])">
     <div class="format-note">
-      <b>Excel 格式要求（各班一個工作表）：</b><br>
-      欄位順序：班級｜座號｜學號｜姓名｜性別｜出生年月日｜坐姿體前彎｜立定跳遠｜仰臥起坐｜800公尺跑走<br><br>
-      <b>CSV 格式：</b>同欄位，UTF-8 或 Big5 編碼<br><br>
-      <b>出生年月日：</b>民國年7碼，例如 1040923（民國104年9月23日）<br>
-      <b>800公尺跑走：</b>分.秒格式，例如 3.17（3分17秒）
+      <b>欄位順序：</b>班級｜座號｜學號｜姓名｜性別｜出生年月日｜坐姿體前彎｜立定跳遠｜仰臥起坐｜800公尺跑走<br>
+      <b>出生年月日：</b>民國年7碼，例如 1040923（無此欄時依年級推算年齡）<br>
+      <b>800公尺跑走：</b>分.秒格式，例如 3.17（3分17秒）<br>
+      <b>及格標準：</b>四項均達 25th 百分位以上
     </div>
   </div>
 </div>
@@ -144,10 +205,17 @@ td.tname { text-align: left; }
       <h1 id="appTitle">體適能常模對照</h1>
       <div class="meta" id="appMeta"></div>
     </div>
-    <button class="btn-reset" onclick="resetApp()">↩ 重新匯入</button>
+    <div class="topbar-btns">
+      <button class="btn btn-orange" id="editModeBtn" onclick="toggleEditMode()">✏️ 調整未及格成績</button>
+      <button class="btn btn-ghost" onclick="resetApp()">↩ 重新匯入</button>
+    </div>
   </div>
 
-  <div class="grade-tabs" id="gradeTabs">
+  <!-- 及格率統計 -->
+  <div class="pass-bar" id="passBar"></div>
+
+  <!-- 年級 tab -->
+  <div class="grade-tabs">
     <div class="tab active" data-grade="all" onclick="setGrade(this)">全部</div>
     <div class="tab" data-grade="4" onclick="setGrade(this)">四年級</div>
     <div class="tab" data-grade="5" onclick="setGrade(this)">五年級</div>
@@ -158,38 +226,39 @@ td.tname { text-align: left; }
     <label>班級：<select id="clsFilter" onchange="render()"><option value="">全部班級</option></select></label>
     <label>性別：
       <select id="genderFilter" onchange="render()">
-        <option value="">全部</option>
-        <option value="男">男</option>
-        <option value="女">女</option>
+        <option value="">全部</option><option value="男">男</option><option value="女">女</option>
       </select>
     </label>
-    <label>篩選：
+    <span class="sep">|</span>
+    <label>顯示：
       <select id="prFilter" onchange="render()">
-        <option value="">全部成績</option>
-        <option value="low">任一項目 &lt; 25th（待加強）</option>
-        <option value="all-low">四項均 &lt; 25th</option>
-        <option value="high">四項均 ≥ 75th（優良）</option>
+        <option value="">全部學生</option>
+        <option value="fail">未及格（任一項 &lt; 25th）</option>
+        <option value="allfail">四項均 &lt; 25th</option>
+        <option value="pass">全部及格（四項均 ≥ 25th）</option>
+        <option value="high">優良（四項均 ≥ 75th）</option>
       </select>
     </label>
     <label><input type="checkbox" id="hideNoScore" onchange="render()"> 隱藏未填成績</label>
+    <span class="mode-badge" id="editBadge">✏️ 調整模式</span>
   </div>
 
   <div class="stats" id="statsBar"></div>
 
   <div class="legend">
     <span style="color:#555">百分位顏色：</span>
-    <div class="legend-item"><div class="legend-box" style="background:#ffcccc"></div> &lt; 25th 待加強</div>
-    <div class="legend-item"><div class="legend-box" style="background:#ffeecc"></div> 25th–50th</div>
-    <div class="legend-item"><div class="legend-box" style="background:#ffffcc"></div> 50th–75th</div>
-    <div class="legend-item"><div class="legend-box" style="background:#ccffcc"></div> ≥ 75th 優良</div>
-    <div class="legend-item"><span class="pr-na">— 未填</span></div>
+    <div class="legend-item"><div class="legend-box" style="background:#ffcccc"></div> &lt;25th 待加強</div>
+    <div class="legend-item"><div class="legend-box" style="background:#ffeecc"></div> 25–50th</div>
+    <div class="legend-item"><div class="legend-box" style="background:#ffffcc"></div> 50–75th</div>
+    <div class="legend-item"><div class="legend-box" style="background:#ccffcc"></div> ≥75th 優良</div>
+    <div class="legend-item"><span class="fail-badge">未及格</span> 四項未全達25th</div>
   </div>
 
   <div class="table-wrap">
     <table>
       <thead>
         <tr>
-          <th>班級</th><th>座號</th><th>姓名</th><th>性別</th><th>年齡</th>
+          <th>班級</th><th>座號</th><th>姓名</th><th>性別</th><th>年齡</th><th>及格</th>
           <th>坐姿體前彎</th><th>PR</th>
           <th>仰臥起坐</th><th>PR</th>
           <th>立定跳遠</th><th>PR</th>
@@ -202,344 +271,399 @@ td.tname { text-align: left; }
   </div>
 </div>
 
-<div id="loadingMsg">⏳ 讀取中，請稍候…</div>
+<!-- 下載面板 -->
+<div class="dl-panel" id="dlPanel">
+  <span class="dl-label">⬇️ 下載調整後成績：</span>
+  <select id="dlGrade">
+    <option value="all">全校（4–6年級）</option>
+    <option value="4">四年級</option>
+    <option value="5">五年級</option>
+    <option value="6">六年級</option>
+  </select>
+  <button class="btn btn-blue" onclick="downloadData()">下載 xlsx</button>
+  <span class="dl-edited-count" id="dlEditedCount"></span>
+  <button class="btn btn-ghost" style="background:#eee;color:#555;margin-left:auto" onclick="exitEditMode()">✖ 結束調整</button>
+</div>
+
+<div id="loadingMsg" style="display:none;position:fixed;inset:0;background:rgba(255,255,255,.9);align-items:center;justify-content:center;font-size:16px;color:#1a3a5c;z-index:999;">
+  ⏳ 讀取中，請稍候…
+</div>
 
 <script>
-// ==================== 常模資料 ====================
+// ==================== 常模 ====================
 const NORM = {
-  bend: {  // 坐姿體前彎 higher=better
-    '男10':[11,15,16,18,19,20,21,23,24,25,25,27,27,29,30,31,32,34,36],
-    '男11':[10,13,15,17,18,19,20,22,23,24,25,26,27,28,29,30,32,34,36],
-    '男12':[ 9,12,15,16,17,19,20,21,22,23,24,25,26,27,29,30,31,33,36],
-    '女10':[16,19,21,23,24,25,27,28,29,30,30,31,32,33,35,36,37,40,42],
-    '女11':[14,18,20,22,24,25,26,27,28,29,30,31,32,33,34,35,37,39,43],
-    '女12':[13,16,19,21,23,24,25,27,28,29,30,31,32,33,35,36,38,40,44],
-  },
-  situp: {  // 仰臥起坐 60秒 higher=better
-    '男10':[11,15,17,19,21,22,24,25,26,27,29,30,31,32,34,36,37,40,43],
-    '男11':[14,17,20,22,23,25,26,27,29,30,31,32,34,35,36,38,40,42,46],
-    '男12':[17,21,23,25,27,28,30,31,32,33,35,36,37,39,40,42,44,46,50],
-    '女10':[10,14,16,18,19,21,22,23,24,25,26,28,29,30,31,33,35,37,40],
-    '女11':[13,17,19,21,22,23,25,26,27,28,29,30,31,32,34,35,37,39,42],
-    '女12':[16,19,21,23,24,26,27,28,29,30,31,32,33,35,36,37,39,41,44],
-  },
-  jump: {  // 立定跳遠 higher=better
-    '男10':[100,105,110,115,119,121,125,127,130,132,135,138,141,145,148,152,156,162,170],
-    '男11':[106,113,118,125,128,131,135,138,141,144,146,150,153,156,160,164,169,174,182],
-    '男12':[112,122,129,133,136,141,145,148,152,155,158,161,165,169,172,176,181,187,198],
-    '女10':[ 95,100,104,107,110,112,115,118,120,123,125,128,130,133,136,140,145,152,160],
-    '女11':[100,105,110,114,117,120,123,125,128,131,134,137,140,142,146,150,155,160,170],
-    '女12':[102,108,113,116,120,123,126,129,131,135,139,142,144,147,150,156,162,167,176],
-  },
-  run: {  // 800公尺跑走（秒）lower=better
-    '男10':[410,385,372,360,347,336,328,318,310,300,291,283,276,267,260,251,241,231,220],
-    '男11':[393,362,346,332,322,314,304,294,287,280,270,263,256,249,242,235,228,219,210],
-    '男12':[361,334,319,308,297,287,279,271,264,257,250,243,237,230,223,218,212,205,194],
-    '女10':[413,389,374,363,353,346,338,328,322,314,307,303,295,287,281,273,265,251,240],
-    '女11':[387,363,348,338,329,322,316,309,303,296,289,283,276,269,262,255,249,236,226],
-    '女12':[368,346,332,322,315,309,303,296,289,284,280,273,267,261,255,249,243,234,223],
-  }
+  bend:  { '男10':[11,15,16,18,19,20,21,23,24,25,25,27,27,29,30,31,32,34,36],'男11':[10,13,15,17,18,19,20,22,23,24,25,26,27,28,29,30,32,34,36],'男12':[9,12,15,16,17,19,20,21,22,23,24,25,26,27,29,30,31,33,36],'女10':[16,19,21,23,24,25,27,28,29,30,30,31,32,33,35,36,37,40,42],'女11':[14,18,20,22,24,25,26,27,28,29,30,31,32,33,34,35,37,39,43],'女12':[13,16,19,21,23,24,25,27,28,29,30,31,32,33,35,36,38,40,44] },
+  situp: { '男10':[11,15,17,19,21,22,24,25,26,27,29,30,31,32,34,36,37,40,43],'男11':[14,17,20,22,23,25,26,27,29,30,31,32,34,35,36,38,40,42,46],'男12':[17,21,23,25,27,28,30,31,32,33,35,36,37,39,40,42,44,46,50],'女10':[10,14,16,18,19,21,22,23,24,25,26,28,29,30,31,33,35,37,40],'女11':[13,17,19,21,22,23,25,26,27,28,29,30,31,32,34,35,37,39,42],'女12':[16,19,21,23,24,26,27,28,29,30,31,32,33,35,36,37,39,41,44] },
+  jump:  { '男10':[100,105,110,115,119,121,125,127,130,132,135,138,141,145,148,152,156,162,170],'男11':[106,113,118,125,128,131,135,138,141,144,146,150,153,156,160,164,169,174,182],'男12':[112,122,129,133,136,141,145,148,152,155,158,161,165,169,172,176,181,187,198],'女10':[95,100,104,107,110,112,115,118,120,123,125,128,130,133,136,140,145,152,160],'女11':[100,105,110,114,117,120,123,125,128,131,134,137,140,142,146,150,155,160,170],'女12':[102,108,113,116,120,123,126,129,131,135,139,142,144,147,150,156,162,167,176] },
+  run:   { '男10':[410,385,372,360,347,336,328,318,310,300,291,283,276,267,260,251,241,231,220],'男11':[393,362,346,332,322,314,304,294,287,280,270,263,256,249,242,235,228,219,210],'男12':[361,334,319,308,297,287,279,271,264,257,250,243,237,230,223,218,212,205,194],'女10':[413,389,374,363,353,346,338,328,322,314,307,303,295,287,281,273,265,251,240],'女11':[387,363,348,338,329,322,316,309,303,296,289,283,276,269,262,255,249,236,226],'女12':[368,346,332,322,315,309,303,296,289,284,280,273,267,261,255,249,243,234,223] }
 };
 const PR_NUMS   = [2,5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95];
-const PR_LABELS = ['<5th','5th','10th','15th','20th','25th','30th','35th','40th','45th',
-                   '50th','55th','60th','65th','70th','75th','80th','85th','90th','≥95th'];
+const PR_LABELS = ['<5th','5th','10th','15th','20th','25th','30th','35th','40th','45th','50th','55th','60th','65th','70th','75th','80th','85th','90th','≥95th'];
+const GRADE_AGE = {'4':10,'5':11,'6':12};
+const TEST_DATE = new Date(2026,2,1);
 
 function getPR(score, nvals, higherBetter) {
-  if (score === null || score === undefined || isNaN(score)) return null;
-  let idx = 0;
-  if (higherBetter) {
-    for (let i = 0; i < nvals.length; i++) { if (score >= nvals[i]) idx = i + 1; }
-  } else {
-    for (let i = 0; i < nvals.length; i++) { if (score <= nvals[i]) idx = i + 1; }
-  }
-  return { label: PR_LABELS[idx], num: PR_NUMS[idx] };
+  if (score===null||score===undefined||isNaN(score)) return null;
+  let idx=0;
+  if (higherBetter) { for(let i=0;i<nvals.length;i++) if(score>=nvals[i]) idx=i+1; }
+  else              { for(let i=0;i<nvals.length;i++) if(score<=nvals[i]) idx=i+1; }
+  return { label:PR_LABELS[idx], num:PR_NUMS[idx] };
 }
-
 function prCls(num) {
-  if (num === null || num === undefined) return 'pr-na';
-  if (num < 25) return 'pr-low';
-  if (num < 50) return 'pr-midlo';
-  if (num < 75) return 'pr-mid';
-  return 'pr-high';
+  if(num===null||num===undefined) return 'pr-na';
+  if(num<25) return 'pr-low'; if(num<50) return 'pr-midlo'; if(num<75) return 'pr-mid'; return 'pr-high';
 }
-
+function isPass(r) {
+  const k=r.gender+r.age;
+  if(!r.age||!k) return false;
+  const items=[
+    r.bend  !==null&&NORM.bend[k]  ? getPR(r.bend,  NORM.bend[k],  true)  : null,
+    r.situp !==null&&NORM.situp[k] ? getPR(r.situp, NORM.situp[k], true)  : null,
+    r.jump  !==null&&NORM.jump[k]  ? getPR(r.jump,  NORM.jump[k],  true)  : null,
+    r.run   !==null&&NORM.run[k]   ? getPR(r.run,   NORM.run[k],  false)  : null,
+  ];
+  if(items.some(p=>p===null)) return false;
+  return items.every(p=>p.num>=25);
+}
 function runToSec(v) {
-  // m.ss format → seconds (e.g. 3.17 = 3min17sec = 197sec)
-  if (v === null || v === undefined || isNaN(v)) return null;
-  const mins = Math.floor(v);
-  const secs = Math.round((v - mins) * 100);
-  return mins * 60 + secs;
+  if(v===null||v===undefined||isNaN(v)) return null;
+  const m=Math.floor(v), s=Math.round((v-m)*100); return m*60+s;
 }
-
+function secToMss(sec) {
+  // seconds → m.ss string for xlsx export
+  if(sec===null||sec===undefined) return '';
+  const m=Math.floor(sec/60), s=sec%60;
+  return parseFloat(m+'.'+String(s).padStart(2,'0'));
+}
 function secToDisplay(sec) {
-  if (sec === null || sec === undefined) return '—';
-  const m = Math.floor(sec / 60);
-  const s = sec % 60;
+  if(sec===null||sec===undefined) return '—';
+  const m=Math.floor(sec/60), s=sec%60;
   return `${m}'${String(s).padStart(2,'0')}"`;
 }
-
-function prHTML(score, key, type) {
-  const isEmpty = score === null || score === undefined || isNaN(score);
-  const scoreDisplay = type === 'run' ? secToDisplay(score) : (isEmpty ? '—' : score);
-  if (isEmpty) {
-    return `<td class="pr-na">—</td><td class="pr-na">—</td>`;
-  }
-  const nvals = NORM[type][key];
-  if (!nvals) return `<td>${scoreDisplay}</td><td class="pr-na">?</td>`;
-  const hb = type !== 'run';
-  const pr = getPR(score, nvals, hb);
-  const cls = prCls(pr ? pr.num : null);
-  const lbl = pr ? pr.label : '?';
-  return `<td>${scoreDisplay}</td><td><span class="pr-cell ${cls}">${lbl}</span></td>`;
-}
-
-// ==================== 資料解析 ====================
-let ALL_DATA = [];
-let currentGrade = 'all';
-let fileName = '';
-
-const TEST_DATE = new Date(2026, 2, 1); // 2026-03-01
-
 function calcAge(birthRoc) {
   try {
-    const s = String(Math.round(birthRoc)).padStart(7, '0');
-    const y = parseInt(s.slice(0, 3)) + 1911;
-    const m = parseInt(s.slice(3, 5)) - 1;
-    const d = parseInt(s.slice(5, 7));
-    const bd = new Date(y, m, d);
-    let age = TEST_DATE.getFullYear() - bd.getFullYear();
-    if (TEST_DATE < new Date(TEST_DATE.getFullYear(), bd.getMonth(), bd.getDate())) age--;
-    return Math.max(10, Math.min(12, age));
-  } catch { return null; }
+    const s=String(Math.round(birthRoc)).padStart(7,'0');
+    const bd=new Date(parseInt(s.slice(0,3))+1911, parseInt(s.slice(3,5))-1, parseInt(s.slice(5,7)));
+    let age=TEST_DATE.getFullYear()-bd.getFullYear();
+    if(TEST_DATE<new Date(TEST_DATE.getFullYear(),bd.getMonth(),bd.getDate())) age--;
+    return Math.max(10,Math.min(12,age));
+  } catch{ return null; }
 }
-
 function safeNum(v) {
-  if (v === null || v === undefined || v === '' || v === '-') return null;
-  const n = parseFloat(v);
-  return isNaN(n) ? null : n;
+  if(v===null||v===undefined||v===''||v==='-') return null;
+  const n=parseFloat(v); return isNaN(n)?null:n;
 }
 
-function parseRows(rows, sheetName) {
-  // rows: array of objects with column values
-  // Try header detection
-  if (rows.length === 0) return [];
-  const result = [];
-  for (const row of rows) {
-    const vals = Object.values(row);
-    if (vals.length < 9) continue;
-    const cls = String(vals[0] || '').trim();
-    if (!cls || isNaN(parseInt(cls))) continue; // skip non-data rows
-    const clsNum = parseInt(cls);
-    if (clsNum < 400 || clsNum > 699) continue;
+// ==================== 狀態 ====================
+let ALL_DATA=[], currentGrade='all', editMode=false, editedIds=new Set();
+let origFile=null; // original workbook for download template
 
-    const birth = safeNum(vals[5]);
-    const age = birth ? calcAge(birth) : null;
-    const runRaw = safeNum(vals[9]);
-
-    result.push({
-      cls: String(clsNum),
-      no: parseInt(vals[1]) || 0,
-      sid: String(vals[2] || ''),
-      name: String(vals[3] || ''),
-      gender: String(vals[4] || '').trim(),
-      birth,
-      age,
-      bend: safeNum(vals[6]),
-      jump: safeNum(vals[7]),
-      situp: safeNum(vals[8]),
-      run: runRaw !== null ? runToSec(runRaw) : null,
-    });
-  }
-  return result;
-}
-
+// ==================== 解析 ====================
 function handleFile(file) {
-  if (!file) return;
-  fileName = file.name;
-  document.getElementById('loadingMsg').style.display = 'flex';
-
-  const reader = new FileReader();
-  reader.onload = function(e) {
+  if(!file) return;
+  document.getElementById('loadingMsg').style.display='flex';
+  const reader=new FileReader();
+  reader.onload=e=>{
     try {
-      const data = new Uint8Array(e.target.result);
-      const wb = XLSX.read(data, { type: 'array' });
-      let allRows = [];
-
-      for (const sheetName of wb.SheetNames) {
-        const ws = wb.Sheets[sheetName];
-        const json = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
-        // Find header row
-        let headerIdx = -1;
-        for (let i = 0; i < Math.min(5, json.length); i++) {
-          const row = json[i];
-          if (row && row.some(c => String(c||'').includes('班級') || String(c||'').includes('姓名'))) {
-            headerIdx = i;
-            break;
-          }
+      const data=new Uint8Array(e.target.result);
+      const wb=XLSX.read(data,{type:'array'});
+      origFile={wb, name:file.name};
+      let rows=[];
+      for(const sn of wb.SheetNames) {
+        const ws=wb.Sheets[sn];
+        const json=XLSX.utils.sheet_to_json(ws,{header:1,defval:null});
+        // find header row
+        let hi=-1;
+        for(let i=0;i<Math.min(5,json.length);i++) {
+          if(json[i]&&json[i].some(c=>String(c||'').includes('班級')||String(c||'').includes('姓名'))) { hi=i; break; }
         }
-        const dataStart = headerIdx >= 0 ? headerIdx + 1 : 1;
-        const rows = json.slice(dataStart).map(r => Object.fromEntries(r.map((v, i) => [i, v])));
-        const parsed = parseRows(rows, sheetName);
-        allRows = allRows.concat(parsed);
-      }
+        const headers=(hi>=0?json[hi]:[]).map(h=>String(h||'').trim());
+        const dataStart=hi>=0?hi+1:1;
+        const colIdx=name=>headers.indexOf(name);
 
-      if (allRows.length === 0) {
-        alert('未能解析到資料，請確認檔案格式符合說明。\n\n班級欄位需為 400–699 的數字（如 401、502、601）。');
-        document.getElementById('loadingMsg').style.display = 'none';
-        return;
+        for(let ri=dataStart;ri<json.length;ri++) {
+          const r=json[ri];
+          if(!r||r.every(v=>v===null||v==='')) continue;
+          const get=name=>{ const i=colIdx(name); return i>=0?r[i]:null; };
+          const clsRaw=get('班級')||r[0];
+          const clsNum=parseInt(clsRaw);
+          if(isNaN(clsNum)||clsNum<400||clsNum>699) continue;
+          const birth=safeNum(get('出生年月日'));
+          const grade=String(clsNum)[0];
+          const age=birth?calcAge(birth):(GRADE_AGE[grade]||null);
+          const runRaw=safeNum(get('800公尺跑走'));
+          rows.push({
+            id:rows.length,
+            cls:String(clsNum),
+            no:parseInt(get('座號'))||0,
+            sid:String(get('學號')||'').replace(/\.0$/,''),
+            name:String(get('姓名')||''),
+            gender:String(get('性別')||'').trim(),
+            birth, age,
+            bend:  safeNum(get('坐姿體前彎')),
+            jump:  safeNum(get('立定跳遠')),
+            situp: safeNum(get('仰臥起坐')),
+            run:   runRaw!==null?runToSec(runRaw):null,
+            // store originals for export
+            _origRun: runRaw,
+            sheetName: sn,
+            rowIdx: ri,
+          });
+        }
       }
-
-      ALL_DATA = allRows;
-      initApp();
-    } catch(err) {
-      alert('讀取失敗：' + err.message);
-      document.getElementById('loadingMsg').style.display = 'none';
-    }
+      if(!rows.length){ alert('未能解析到資料，請確認欄位格式。'); document.getElementById('loadingMsg').style.display='none'; return; }
+      ALL_DATA=rows;
+      initApp(file.name);
+    } catch(err){ alert('讀取失敗：'+err.message); document.getElementById('loadingMsg').style.display='none'; }
   };
   reader.readAsArrayBuffer(file);
 }
 
-// CSV fallback or drag
-document.addEventListener('DOMContentLoaded', () => {
-  const dz = document.getElementById('dropZone');
-  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
-  dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
-  dz.addEventListener('drop', e => {
-    e.preventDefault();
-    dz.classList.remove('drag-over');
-    const f = e.dataTransfer.files[0];
-    if (f) handleFile(f);
-  });
+document.addEventListener('DOMContentLoaded',()=>{
+  const dz=document.getElementById('dropZone');
+  dz.addEventListener('dragover',e=>{ e.preventDefault(); dz.classList.add('drag-over'); });
+  dz.addEventListener('dragleave',()=>dz.classList.remove('drag-over'));
+  dz.addEventListener('drop',e=>{ e.preventDefault(); dz.classList.remove('drag-over'); handleFile(e.dataTransfer.files[0]); });
 });
 
-// ==================== APP INIT ====================
-function initApp() {
-  document.getElementById('loadingMsg').style.display = 'none';
-  document.getElementById('uploadScreen').style.display = 'none';
-  document.getElementById('appScreen').style.display = 'block';
-
-  const total = ALL_DATA.length;
-  document.getElementById('appTitle').textContent = '體適能常模對照 — ' + fileName;
-  document.getElementById('appMeta').textContent =
-    `共 ${total} 位學生　測驗基準日：2026/03/01　（可調整出生年月日基準）`;
-
-  currentGrade = 'all';
-  document.querySelectorAll('.tab').forEach(t => {
-    t.classList.toggle('active', t.dataset.grade === 'all');
-  });
-  populateClsFilter();
-  render();
+// ==================== APP ====================
+function initApp(fname) {
+  document.getElementById('loadingMsg').style.display='none';
+  document.getElementById('uploadScreen').style.display='none';
+  document.getElementById('appScreen').style.display='block';
+  document.getElementById('appTitle').textContent='體適能常模對照 — '+fname;
+  document.getElementById('appMeta').textContent=`共 ${ALL_DATA.length} 位學生　測驗基準日：2026/03/01　及格標準：四項均 ≥ 25th`;
+  currentGrade='all'; editMode=false; editedIds=new Set();
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.grade==='all'));
+  document.getElementById('dlPanel').classList.remove('show');
+  document.getElementById('editBadge').classList.remove('show');
+  document.getElementById('editModeBtn').textContent='✏️ 調整未及格成績';
+  populateClsFilter(); updatePassBar(); render();
 }
-
 function resetApp() {
-  ALL_DATA = [];
-  fileName = '';
-  currentGrade = 'all';
-  document.getElementById('uploadScreen').style.display = 'flex';
-  document.getElementById('appScreen').style.display = 'none';
-  document.getElementById('fileInput').value = '';
+  ALL_DATA=[]; origFile=null; editMode=false; editedIds=new Set();
+  document.getElementById('uploadScreen').style.display='flex';
+  document.getElementById('appScreen').style.display='none';
+  document.getElementById('fileInput').value='';
 }
-
 function setGrade(el) {
-  currentGrade = el.dataset.grade;
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  currentGrade=el.dataset.grade;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
-  populateClsFilter();
-  render();
+  populateClsFilter(); render();
 }
-
 function gradeMatch(r) {
-  if (currentGrade === 'all') return true;
-  return r.cls && r.cls[0] === currentGrade;
+  if(currentGrade==='all') return true;
+  return r.cls&&r.cls[0]===currentGrade;
+}
+function populateClsFilter() {
+  const sel=document.getElementById('clsFilter'), prev=sel.value;
+  sel.innerHTML='<option value="">全部班級</option>';
+  [...new Set(ALL_DATA.filter(gradeMatch).map(r=>r.cls))].sort().forEach(c=>{
+    const o=document.createElement('option'); o.value=c; o.textContent=c+'班'; sel.appendChild(o);
+  });
+  if([...sel.options].some(o=>o.value===prev)) sel.value=prev;
 }
 
-function populateClsFilter() {
-  const sel = document.getElementById('clsFilter');
-  const prev = sel.value;
-  sel.innerHTML = '<option value="">全部班級</option>';
-  const classes = [...new Set(ALL_DATA.filter(gradeMatch).map(r => r.cls))].sort();
-  classes.forEach(c => {
-    const o = document.createElement('option');
-    o.value = c; o.textContent = c + '班';
-    sel.appendChild(o);
-  });
-  if (classes.includes(prev)) sel.value = prev;
+// ==================== 及格率 ====================
+function calcPassRate(data) {
+  const withScore=data.filter(r=>r.bend!==null&&r.situp!==null&&r.jump!==null&&r.run!==null&&r.age);
+  const pass=withScore.filter(isPass);
+  return { pass:pass.length, total:withScore.length };
+}
+function updatePassBar() {
+  const grades=[
+    {label:'全校',data:ALL_DATA},
+    {label:'四年級',data:ALL_DATA.filter(r=>r.cls[0]==='4')},
+    {label:'五年級',data:ALL_DATA.filter(r=>r.cls[0]==='5')},
+    {label:'六年級',data:ALL_DATA.filter(r=>r.cls[0]==='6')},
+  ];
+  const html=grades.map(g=>{
+    const {pass,total}=calcPassRate(g.data);
+    const pct=total>0?Math.round(pass/total*100):0;
+    const cls=pct>=80?'rate-high':pct>=60?'rate-mid':'rate-low';
+    const barColor=pct>=80?'#22c55e':pct>=60?'#f59e0b':'#ef4444';
+    return `<div class="pass-item">
+      <div><div class="label">${g.label}及格率</div>
+      <div class="pass-progress"><div class="pass-progress-fill" style="width:${pct}%;background:${barColor}"></div></div></div>
+      <div><div class="rate ${cls}">${pct}%</div><div class="frac">${pass}/${total}</div></div>
+    </div>`;
+  }).join('');
+  document.getElementById('passBar').innerHTML='<span class="pass-bar-title">📋 及格率</span>'+html;
 }
 
 // ==================== RENDER ====================
 function render() {
-  const cls    = document.getElementById('clsFilter').value;
-  const gender = document.getElementById('genderFilter').value;
-  const prF    = document.getElementById('prFilter').value;
-  const hideNS = document.getElementById('hideNoScore').checked;
+  const cls=document.getElementById('clsFilter').value;
+  const gender=document.getElementById('genderFilter').value;
+  const prF=document.getElementById('prFilter').value;
+  const hideNS=document.getElementById('hideNoScore').checked;
 
-  let data = ALL_DATA.filter(gradeMatch);
-  if (cls)    data = data.filter(r => r.cls === cls);
-  if (gender) data = data.filter(r => r.gender === gender);
-  if (hideNS) data = data.filter(r => r.bend !== null || r.situp !== null || r.jump !== null || r.run !== null);
+  let data=ALL_DATA.filter(gradeMatch);
+  if(cls)    data=data.filter(r=>r.cls===cls);
+  if(gender) data=data.filter(r=>r.gender===gender);
+  if(hideNS) data=data.filter(r=>r.bend!==null||r.situp!==null||r.jump!==null||r.run!==null);
 
-  if (prF) {
-    data = data.filter(r => {
-      const k = r.gender + r.age;
-      const prs = [];
-      if (r.bend  !== null && NORM.bend[k])  prs.push(getPR(r.bend,  NORM.bend[k],  true).num);
-      if (r.situp !== null && NORM.situp[k]) prs.push(getPR(r.situp, NORM.situp[k], true).num);
-      if (r.jump  !== null && NORM.jump[k])  prs.push(getPR(r.jump,  NORM.jump[k],  true).num);
-      if (r.run   !== null && NORM.run[k])   prs.push(getPR(r.run,   NORM.run[k],  false).num);
-      if (prs.length === 0) return false;
-      if (prF === 'low')     return prs.some(p => p < 25);
-      if (prF === 'all-low') return prs.every(p => p < 25);
-      if (prF === 'high')    return prs.every(p => p >= 75);
-      return true;
-    });
-  }
+  if(prF==='fail')    data=data.filter(r=>!isPass(r)&&r.age);
+  else if(prF==='allfail') data=data.filter(r=>{ const k=r.gender+r.age; if(!k)return false; const prs=[]; ['bend','situp','jump'].forEach(t=>{ if(r[t]!==null&&NORM[t][k]) prs.push(getPR(r[t],NORM[t][k],true).num); }); if(r.run!==null&&NORM.run[k]) prs.push(getPR(r.run,NORM.run[k],false).num); return prs.length>0&&prs.every(p=>p<25); });
+  else if(prF==='pass') data=data.filter(r=>isPass(r));
+  else if(prF==='high') data=data.filter(r=>{ const k=r.gender+r.age; if(!k)return false; const prs=[]; ['bend','situp','jump'].forEach(t=>{ if(r[t]!==null&&NORM[t][k]) prs.push(getPR(r[t],NORM[t][k],true).num); }); if(r.run!==null&&NORM.run[k]) prs.push(getPR(r.run,NORM.run[k],false).num); return prs.length===4&&prs.every(p=>p>=75); });
+
+  // 調整模式自動篩未及格
+  if(editMode&&prF==='') data=data.filter(r=>!isPass(r)&&r.age);
 
   updateStats(data);
 
-  const tbody = document.getElementById('tbody');
-  if (data.length === 0) {
-    tbody.innerHTML = '';
-    document.getElementById('noData').style.display = 'block';
-    return;
-  }
-  document.getElementById('noData').style.display = 'none';
+  const tbody=document.getElementById('tbody');
+  if(!data.length){ tbody.innerHTML=''; document.getElementById('noData').style.display='block'; return; }
+  document.getElementById('noData').style.display='none';
 
-  tbody.innerHTML = data.map(r => {
-    const k = r.gender + (r.age || '');
-    return `<tr>
-      <td>${r.cls}</td>
-      <td>${r.no}</td>
-      <td class="tname">${r.name}</td>
-      <td>${r.gender}</td>
-      <td>${r.age || '?'}</td>
-      ${prHTML(r.bend,  k, 'bend')}
-      ${prHTML(r.situp, k, 'situp')}
-      ${prHTML(r.jump,  k, 'jump')}
-      ${prHTML(r.run,   k, 'run')}
+  tbody.innerHTML=data.map(r=>{
+    const k=r.gender+(r.age||'');
+    const pass=r.age?isPass(r):null;
+    const passBadge=pass===null?'<span class="pr-na">—</span>':pass?'<span class="pass-badge">及格</span>':'<span class="fail-badge">未及格</span>';
+    const rowCls=(pass===false?'fail-row':'')+(editedIds.has(r.id)?' edited':'');
+    return `<tr class="${rowCls}" data-id="${r.id}">
+      <td>${r.cls}</td><td>${r.no}</td><td class="tname">${r.name}</td><td>${r.gender}</td><td>${r.age||'?'}</td><td>${passBadge}</td>
+      ${scoreCell(r,'bend',k,'bend',true)}
+      ${scoreCell(r,'situp',k,'situp',true)}
+      ${scoreCell(r,'jump',k,'jump',true)}
+      ${runCell(r,k)}
     </tr>`;
   }).join('');
 }
 
+function scoreCell(r,field,k,type,hb) {
+  const v=r[field];
+  const scoreDisplay=v===null?'—':v;
+  if(v===null) return `<td class="pr-na">—</td><td class="pr-na">—</td>`;
+  const nvals=NORM[type][k]; if(!nvals) return `<td>${scoreDisplay}</td><td class="pr-na">?</td>`;
+  const pr=getPR(v,nvals,hb);
+  const cls=prCls(pr?pr.num:null);
+  const scoreHtml=editMode
+    ?`<input class="edit-input" type="number" value="${v}" data-id="${r.id}" data-field="${field}" onchange="updateScore(this)" min="0">`
+    :scoreDisplay;
+  return `<td>${scoreHtml}</td><td><span class="pr-cell ${cls}">${pr?pr.label:'?'}</span></td>`;
+}
+
+function runCell(r,k) {
+  const v=r.run;
+  if(v===null) return `<td class="pr-na">—</td><td class="pr-na">—</td>`;
+  const nvals=NORM.run[k]; if(!nvals) return `<td>${secToDisplay(v)}</td><td class="pr-na">?</td>`;
+  const pr=getPR(v,nvals,false);
+  const cls=prCls(pr?pr.num:null);
+  if(editMode) {
+    const mss=secToMss(v);
+    return `<td><input class="edit-input run-input" type="number" step="0.01" value="${mss}" data-id="${r.id}" data-field="run" onchange="updateScore(this)" min="0"></td><td><span class="pr-cell ${cls}">${pr?pr.label:'?'}</span></td>`;
+  }
+  return `<td>${secToDisplay(v)}</td><td><span class="pr-cell ${cls}">${pr?pr.label:'?'}</span></td>`;
+}
+
 function updateStats(data) {
-  const total = data.length;
-  const hasScore = data.filter(r => r.bend !== null || r.situp !== null).length;
-  let lowCnt = 0, highCnt = 0;
-  data.forEach(r => {
-    const k = r.gender + r.age;
-    const prs = [];
-    if (r.bend  !== null && NORM.bend[k])  prs.push(getPR(r.bend,  NORM.bend[k],  true).num);
-    if (r.situp !== null && NORM.situp[k]) prs.push(getPR(r.situp, NORM.situp[k], true).num);
-    if (r.jump  !== null && NORM.jump[k])  prs.push(getPR(r.jump,  NORM.jump[k],  true).num);
-    if (r.run   !== null && NORM.run[k])   prs.push(getPR(r.run,   NORM.run[k],  false).num);
-    if (prs.length > 0 && prs.some(p => p < 25))   lowCnt++;
-    if (prs.length > 0 && prs.every(p => p >= 75)) highCnt++;
-  });
-  document.getElementById('statsBar').innerHTML = `
+  const total=data.length;
+  const hasScore=data.filter(r=>r.bend!==null||r.situp!==null).length;
+  const {pass,total:scored}=calcPassRate(data);
+  const fail=scored-pass;
+  document.getElementById('statsBar').innerHTML=`
     <div class="stat-card"><div class="val">${total}</div><div class="lbl">顯示人數</div></div>
     <div class="stat-card"><div class="val">${hasScore}</div><div class="lbl">已填成績</div></div>
-    <div class="stat-card warn"><div class="val">${lowCnt}</div><div class="lbl">任一項 &lt;25th</div></div>
-    <div class="stat-card good"><div class="val">${highCnt}</div><div class="lbl">四項 ≥75th</div></div>
+    <div class="stat-card warn"><div class="val">${fail}</div><div class="lbl">未及格</div></div>
+    <div class="stat-card good"><div class="val">${pass}</div><div class="lbl">及格</div></div>
+    <div class="stat-card good"><div class="val">${scored>0?Math.round(pass/scored*100):0}%</div><div class="lbl">及格率</div></div>
   `;
+}
+
+// ==================== 編輯模式 ====================
+function toggleEditMode() {
+  editMode=!editMode;
+  const btn=document.getElementById('editModeBtn');
+  const badge=document.getElementById('editBadge');
+  const panel=document.getElementById('dlPanel');
+  if(editMode) {
+    btn.textContent='✅ 結束調整'; btn.className='btn btn-green';
+    badge.classList.add('show'); panel.classList.add('show');
+    // auto switch filter to fail
+    if(document.getElementById('prFilter').value==='') {
+      // keep as-is, render() handles it
+    }
+  } else {
+    exitEditMode();
+  }
+  updateEditedCount();
+  render();
+}
+function exitEditMode() {
+  editMode=false;
+  document.getElementById('editModeBtn').textContent='✏️ 調整未及格成績';
+  document.getElementById('editModeBtn').className='btn btn-orange';
+  document.getElementById('editBadge').classList.remove('show');
+  document.getElementById('dlPanel').classList.remove('show');
+  render();
+}
+function updateScore(input) {
+  const id=parseInt(input.dataset.id);
+  const field=input.dataset.field;
+  const val=parseFloat(input.value);
+  const r=ALL_DATA.find(r=>r.id===id);
+  if(!r) return;
+  if(field==='run') {
+    r.run=runToSec(val);
+    r._origRun=val;
+  } else {
+    r[field]=isNaN(val)?null:val;
+  }
+  editedIds.add(id);
+  updateEditedCount();
+  updatePassBar();
+  // update PR cell next to this input
+  const tr=input.closest('tr');
+  const k=r.gender+(r.age||'');
+  if(field==='run') {
+    const pr=r.run!==null&&NORM.run[k]?getPR(r.run,NORM.run[k],false):null;
+    const prCell=tr.querySelectorAll('.pr-cell')[3];
+    if(prCell) { prCell.textContent=pr?pr.label:'?'; prCell.className='pr-cell '+prCls(pr?pr.num:null); }
+  } else {
+    const idx={bend:0,situp:1,jump:2}[field];
+    const nvals=NORM[field][k];
+    const pr=nvals?getPR(r[field],nvals,true):null;
+    const cells=tr.querySelectorAll('.pr-cell');
+    if(cells[idx]) { cells[idx].textContent=pr?pr.label:'?'; cells[idx].className='pr-cell '+prCls(pr?pr.num:null); }
+  }
+  // update pass badge
+  const passBadgeCell=tr.cells[5];
+  const pass=isPass(r);
+  passBadgeCell.innerHTML=pass?'<span class="pass-badge">及格</span>':'<span class="fail-badge">未及格</span>';
+  tr.className=(pass?'':' fail-row')+(editedIds.has(id)?' edited':'');
+}
+function updateEditedCount() {
+  document.getElementById('dlEditedCount').textContent=editedIds.size>0?`已調整 ${editedIds.size} 位學生成績`:'';
+}
+
+// ==================== 下載 ====================
+function downloadData() {
+  const grade=document.getElementById('dlGrade').value;
+  let data=ALL_DATA;
+  if(grade!=='all') data=data.filter(r=>r.cls[0]===grade);
+
+  // Build workbook - one sheet per class
+  const wb=XLSX.utils.book_new();
+  const classes=[...new Set(data.map(r=>r.cls))].sort();
+  const HEADERS=['班級','座號','學號','姓名','性別','出生年月日','坐姿體前彎','立定跳遠','仰臥起坐','800公尺跑走'];
+
+  classes.forEach(cls=>{
+    const rows=data.filter(r=>r.cls===cls).sort((a,b)=>a.no-b.no);
+    const wsData=[HEADERS,...rows.map(r=>[
+      parseInt(r.cls), r.no, r.sid, r.name, r.gender,
+      r.birth||'', r.bend||'', r.jump||'', r.situp||'', secToMss(r.run)||''
+    ])];
+    const ws=XLSX.utils.aoa_to_sheet(wsData);
+    ws['!cols']=[{wch:6},{wch:6},{wch:10},{wch:8},{wch:6},{wch:12},{wch:10},{wch:10},{wch:10},{wch:12}];
+    XLSX.utils.book_append_sheet(wb,ws,cls);
+  });
+
+  const suffix=grade==='all'?'全校':`${grade}年級`;
+  const fname=`體適能成績_${suffix}_調整後.xlsx`;
+  XLSX.writeFile(wb,fname);
 }
 </script>
 </body>
