@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>體適能常模對照工具</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Microsoft JhengHei', Arial, sans-serif; background: #f0f4f8; color: #333; min-height: 100vh; }
+
+/* === UPLOAD SCREEN === */
+#uploadScreen {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-height: 100vh; padding: 24px;
+}
+.upload-card {
+  background: white; border-radius: 16px; padding: 48px 40px; max-width: 560px; width: 100%;
+  text-align: center; box-shadow: 0 4px 24px rgba(0,0,0,.1);
+}
+.upload-card h1 { font-size: 24px; color: #1a3a5c; margin-bottom: 8px; }
+.upload-card p { color: #666; font-size: 14px; line-height: 1.6; margin-bottom: 28px; }
+.drop-zone {
+  border: 2px dashed #5a9fd4; border-radius: 12px; padding: 40px 24px; cursor: pointer;
+  transition: all .2s; background: #f7fbff;
+}
+.drop-zone:hover, .drop-zone.drag-over { background: #e0f0ff; border-color: #1a3a5c; }
+.drop-zone svg { width: 48px; height: 48px; color: #5a9fd4; margin-bottom: 12px; }
+.drop-zone p { color: #666; font-size: 14px; margin: 0; }
+.drop-zone strong { color: #2e6da4; }
+#fileInput { display: none; }
+.format-note { margin-top: 20px; font-size: 12px; color: #999; line-height: 1.8; text-align: left; background: #f8f9fa; border-radius: 8px; padding: 12px 16px; }
+.format-note b { color: #555; }
+
+/* === MAIN APP === */
+#appScreen { display: none; }
+.topbar {
+  background: linear-gradient(135deg, #1a3a5c, #2e6da4); color: white;
+  padding: 12px 20px; display: flex; align-items: center; gap: 16px;
+}
+.topbar h1 { font-size: 18px; font-weight: 700; flex: 1; }
+.topbar .meta { font-size: 12px; opacity: .75; }
+.btn-reset {
+  background: rgba(255,255,255,.2); border: 1px solid rgba(255,255,255,.4);
+  color: white; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 13px;
+}
+.btn-reset:hover { background: rgba(255,255,255,.3); }
+
+.grade-tabs {
+  background: white; border-bottom: 1px solid #dde;
+  display: flex; padding: 0 16px; overflow-x: auto;
+}
+.tab {
+  padding: 10px 18px; cursor: pointer; font-size: 14px; white-space: nowrap;
+  border-bottom: 3px solid transparent; color: #666; user-select: none;
+}
+.tab.active { color: #1a3a5c; border-bottom-color: #1a3a5c; font-weight: 700; }
+.tab:hover:not(.active) { color: #2e6da4; }
+
+.toolbar {
+  background: white; padding: 10px 16px; border-bottom: 1px solid #eee;
+  display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+}
+.toolbar select { padding: 5px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; }
+.toolbar label { font-size: 13px; color: #555; display: flex; align-items: center; gap: 5px; }
+
+.stats { display: flex; gap: 10px; padding: 12px 16px; flex-wrap: wrap; }
+.stat-card {
+  background: white; border-radius: 8px; padding: 10px 16px; min-width: 110px;
+  text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,.08);
+}
+.stat-card .val { font-size: 22px; font-weight: 700; color: #1a3a5c; }
+.stat-card .lbl { font-size: 11px; color: #888; margin-top: 2px; }
+.stat-card.warn .val { color: #c00; }
+.stat-card.good .val { color: #090; }
+.stat-card.warn { border-left: 3px solid #e55; }
+.stat-card.good { border-left: 3px solid #2a2; }
+
+.legend {
+  display: flex; gap: 16px; padding: 6px 16px 10px; flex-wrap: wrap;
+  font-size: 12px; align-items: center;
+}
+.legend-item { display: flex; align-items: center; gap: 5px; }
+.legend-box { width: 14px; height: 14px; border-radius: 3px; }
+
+.table-wrap { padding: 0 16px 24px; overflow-x: auto; }
+table {
+  width: 100%; border-collapse: collapse; background: white; border-radius: 8px;
+  overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.08); font-size: 13px;
+}
+thead th {
+  background: #1a3a5c; color: white; padding: 9px 8px; text-align: center;
+  white-space: nowrap; position: sticky; top: 0; z-index: 1;
+}
+tbody tr:nth-child(even) { background: #f8f9fb; }
+tbody tr:hover { background: #e8f0fb; }
+td { padding: 7px 8px; text-align: center; border-bottom: 1px solid #eee; white-space: nowrap; }
+td.tname { text-align: left; }
+.pr-cell { border-radius: 4px; padding: 2px 6px; font-size: 12px; font-weight: 600; display: inline-block; }
+.pr-low    { background: #ffcccc; color: #c00; }
+.pr-midlo  { background: #ffeecc; color: #a60; }
+.pr-mid    { background: #ffffcc; color: #880; }
+.pr-high   { background: #ccffcc; color: #050; }
+.pr-na     { color: #bbb; font-size: 11px; }
+.no-data   { text-align: center; padding: 48px; color: #aaa; }
+
+/* Loading */
+#loadingMsg {
+  position: fixed; inset: 0; background: rgba(255,255,255,.9);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; color: #1a3a5c; z-index: 999; display: none;
+}
+</style>
+</head>
+<body>
+
+<!-- ===== UPLOAD SCREEN ===== -->
+<div id="uploadScreen">
+  <div class="upload-card">
+    <h1>📊 體適能常模對照工具</h1>
+    <p>匯入各班成績檔案，自動對照教育部常模百分位，支援每學年重新匯入</p>
+    <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+      </svg>
+      <p>點擊或拖曳檔案到此處</p>
+      <p style="margin-top:6px"><strong>支援 .xlsx / .xlsm / .csv</strong></p>
+    </div>
+    <input type="file" id="fileInput" accept=".xlsx,.xlsm,.csv" onchange="handleFile(this.files[0])">
+    <div class="format-note">
+      <b>Excel 格式要求（各班一個工作表）：</b><br>
+      欄位順序：班級｜座號｜學號｜姓名｜性別｜出生年月日｜坐姿體前彎｜立定跳遠｜仰臥起坐｜800公尺跑走<br><br>
+      <b>CSV 格式：</b>同欄位，UTF-8 或 Big5 編碼<br><br>
+      <b>出生年月日：</b>民國年7碼，例如 1040923（民國104年9月23日）<br>
+      <b>800公尺跑走：</b>分.秒格式，例如 3.17（3分17秒）
+    </div>
+  </div>
+</div>
+
+<!-- ===== MAIN APP ===== -->
+<div id="appScreen">
+  <div class="topbar">
+    <div>
+      <h1 id="appTitle">體適能常模對照</h1>
+      <div class="meta" id="appMeta"></div>
+    </div>
+    <button class="btn-reset" onclick="resetApp()">↩ 重新匯入</button>
+  </div>
+
+  <div class="grade-tabs" id="gradeTabs">
+    <div class="tab active" data-grade="all" onclick="setGrade(this)">全部</div>
+    <div class="tab" data-grade="4" onclick="setGrade(this)">四年級</div>
+    <div class="tab" data-grade="5" onclick="setGrade(this)">五年級</div>
+    <div class="tab" data-grade="6" onclick="setGrade(this)">六年級</div>
+  </div>
+
+  <div class="toolbar">
+    <label>班級：<select id="clsFilter" onchange="render()"><option value="">全部班級</option></select></label>
+    <label>性別：
+      <select id="genderFilter" onchange="render()">
+        <option value="">全部</option>
+        <option value="男">男</option>
+        <option value="女">女</option>
+      </select>
+    </label>
+    <label>篩選：
+      <select id="prFilter" onchange="render()">
+        <option value="">全部成績</option>
+        <option value="low">任一項目 &lt; 25th（待加強）</option>
+        <option value="all-low">四項均 &lt; 25th</option>
+        <option value="high">四項均 ≥ 75th（優良）</option>
+      </select>
+    </label>
+    <label><input type="checkbox" id="hideNoScore" onchange="render()"> 隱藏未填成績</label>
+  </div>
+
+  <div class="stats" id="statsBar"></div>
+
+  <div class="legend">
+    <span style="color:#555">百分位顏色：</span>
+    <div class="legend-item"><div class="legend-box" style="background:#ffcccc"></div> &lt; 25th 待加強</div>
+    <div class="legend-item"><div class="legend-box" style="background:#ffeecc"></div> 25th–50th</div>
+    <div class="legend-item"><div class="legend-box" style="background:#ffffcc"></div> 50th–75th</div>
+    <div class="legend-item"><div class="legend-box" style="background:#ccffcc"></div> ≥ 75th 優良</div>
+    <div class="legend-item"><span class="pr-na">— 未填</span></div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>班級</th><th>座號</th><th>姓名</th><th>性別</th><th>年齡</th>
+          <th>坐姿體前彎</th><th>PR</th>
+          <th>仰臥起坐</th><th>PR</th>
+          <th>立定跳遠</th><th>PR</th>
+          <th>800公尺跑走</th><th>PR</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <div class="no-data" id="noData" style="display:none">無符合條件的資料</div>
+  </div>
+</div>
+
+<div id="loadingMsg">⏳ 讀取中，請稍候…</div>
+
+<script>
+// ==================== 常模資料 ====================
+const NORM = {
+  bend: {  // 坐姿體前彎 higher=better
+    '男10':[11,15,16,18,19,20,21,23,24,25,25,27,27,29,30,31,32,34,36],
+    '男11':[10,13,15,17,18,19,20,22,23,24,25,26,27,28,29,30,32,34,36],
+    '男12':[ 9,12,15,16,17,19,20,21,22,23,24,25,26,27,29,30,31,33,36],
+    '女10':[16,19,21,23,24,25,27,28,29,30,30,31,32,33,35,36,37,40,42],
+    '女11':[14,18,20,22,24,25,26,27,28,29,30,31,32,33,34,35,37,39,43],
+    '女12':[13,16,19,21,23,24,25,27,28,29,30,31,32,33,35,36,38,40,44],
+  },
+  situp: {  // 仰臥起坐 60秒 higher=better
+    '男10':[11,15,17,19,21,22,24,25,26,27,29,30,31,32,34,36,37,40,43],
+    '男11':[14,17,20,22,23,25,26,27,29,30,31,32,34,35,36,38,40,42,46],
+    '男12':[17,21,23,25,27,28,30,31,32,33,35,36,37,39,40,42,44,46,50],
+    '女10':[10,14,16,18,19,21,22,23,24,25,26,28,29,30,31,33,35,37,40],
+    '女11':[13,17,19,21,22,23,25,26,27,28,29,30,31,32,34,35,37,39,42],
+    '女12':[16,19,21,23,24,26,27,28,29,30,31,32,33,35,36,37,39,41,44],
+  },
+  jump: {  // 立定跳遠 higher=better
+    '男10':[100,105,110,115,119,121,125,127,130,132,135,138,141,145,148,152,156,162,170],
+    '男11':[106,113,118,125,128,131,135,138,141,144,146,150,153,156,160,164,169,174,182],
+    '男12':[112,122,129,133,136,141,145,148,152,155,158,161,165,169,172,176,181,187,198],
+    '女10':[ 95,100,104,107,110,112,115,118,120,123,125,128,130,133,136,140,145,152,160],
+    '女11':[100,105,110,114,117,120,123,125,128,131,134,137,140,142,146,150,155,160,170],
+    '女12':[102,108,113,116,120,123,126,129,131,135,139,142,144,147,150,156,162,167,176],
+  },
+  run: {  // 800公尺跑走（秒）lower=better
+    '男10':[410,385,372,360,347,336,328,318,310,300,291,283,276,267,260,251,241,231,220],
+    '男11':[393,362,346,332,322,314,304,294,287,280,270,263,256,249,242,235,228,219,210],
+    '男12':[361,334,319,308,297,287,279,271,264,257,250,243,237,230,223,218,212,205,194],
+    '女10':[413,389,374,363,353,346,338,328,322,314,307,303,295,287,281,273,265,251,240],
+    '女11':[387,363,348,338,329,322,316,309,303,296,289,283,276,269,262,255,249,236,226],
+    '女12':[368,346,332,322,315,309,303,296,289,284,280,273,267,261,255,249,243,234,223],
+  }
+};
+const PR_NUMS   = [2,5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95];
+const PR_LABELS = ['<5th','5th','10th','15th','20th','25th','30th','35th','40th','45th',
+                   '50th','55th','60th','65th','70th','75th','80th','85th','90th','≥95th'];
+
+function getPR(score, nvals, higherBetter) {
+  if (score === null || score === undefined || isNaN(score)) return null;
+  let idx = 0;
+  if (higherBetter) {
+    for (let i = 0; i < nvals.length; i++) { if (score >= nvals[i]) idx = i + 1; }
+  } else {
+    for (let i = 0; i < nvals.length; i++) { if (score <= nvals[i]) idx = i + 1; }
+  }
+  return { label: PR_LABELS[idx], num: PR_NUMS[idx] };
+}
+
+function prCls(num) {
+  if (num === null || num === undefined) return 'pr-na';
+  if (num < 25) return 'pr-low';
+  if (num < 50) return 'pr-midlo';
+  if (num < 75) return 'pr-mid';
+  return 'pr-high';
+}
+
+function runToSec(v) {
+  // m.ss format → seconds (e.g. 3.17 = 3min17sec = 197sec)
+  if (v === null || v === undefined || isNaN(v)) return null;
+  const mins = Math.floor(v);
+  const secs = Math.round((v - mins) * 100);
+  return mins * 60 + secs;
+}
+
+function secToDisplay(sec) {
+  if (sec === null || sec === undefined) return '—';
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${m}'${String(s).padStart(2,'0')}"`;
+}
+
+function prHTML(score, key, type) {
+  const isEmpty = score === null || score === undefined || isNaN(score);
+  const scoreDisplay = type === 'run' ? secToDisplay(score) : (isEmpty ? '—' : score);
+  if (isEmpty) {
+    return `<td class="pr-na">—</td><td class="pr-na">—</td>`;
+  }
+  const nvals = NORM[type][key];
+  if (!nvals) return `<td>${scoreDisplay}</td><td class="pr-na">?</td>`;
+  const hb = type !== 'run';
+  const pr = getPR(score, nvals, hb);
+  const cls = prCls(pr ? pr.num : null);
+  const lbl = pr ? pr.label : '?';
+  return `<td>${scoreDisplay}</td><td><span class="pr-cell ${cls}">${lbl}</span></td>`;
+}
+
+// ==================== 資料解析 ====================
+let ALL_DATA = [];
+let currentGrade = 'all';
+let fileName = '';
+
+const TEST_DATE = new Date(2026, 2, 1); // 2026-03-01
+
+function calcAge(birthRoc) {
+  try {
+    const s = String(Math.round(birthRoc)).padStart(7, '0');
+    const y = parseInt(s.slice(0, 3)) + 1911;
+    const m = parseInt(s.slice(3, 5)) - 1;
+    const d = parseInt(s.slice(5, 7));
+    const bd = new Date(y, m, d);
+    let age = TEST_DATE.getFullYear() - bd.getFullYear();
+    if (TEST_DATE < new Date(TEST_DATE.getFullYear(), bd.getMonth(), bd.getDate())) age--;
+    return Math.max(10, Math.min(12, age));
+  } catch { return null; }
+}
+
+function safeNum(v) {
+  if (v === null || v === undefined || v === '' || v === '-') return null;
+  const n = parseFloat(v);
+  return isNaN(n) ? null : n;
+}
+
+function parseRows(rows, sheetName) {
+  // rows: array of objects with column values
+  // Try header detection
+  if (rows.length === 0) return [];
+  const result = [];
+  for (const row of rows) {
+    const vals = Object.values(row);
+    if (vals.length < 9) continue;
+    const cls = String(vals[0] || '').trim();
+    if (!cls || isNaN(parseInt(cls))) continue; // skip non-data rows
+    const clsNum = parseInt(cls);
+    if (clsNum < 400 || clsNum > 699) continue;
+
+    const birth = safeNum(vals[5]);
+    const age = birth ? calcAge(birth) : null;
+    const runRaw = safeNum(vals[9]);
+
+    result.push({
+      cls: String(clsNum),
+      no: parseInt(vals[1]) || 0,
+      sid: String(vals[2] || ''),
+      name: String(vals[3] || ''),
+      gender: String(vals[4] || '').trim(),
+      birth,
+      age,
+      bend: safeNum(vals[6]),
+      jump: safeNum(vals[7]),
+      situp: safeNum(vals[8]),
+      run: runRaw !== null ? runToSec(runRaw) : null,
+    });
+  }
+  return result;
+}
+
+function handleFile(file) {
+  if (!file) return;
+  fileName = file.name;
+  document.getElementById('loadingMsg').style.display = 'flex';
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const wb = XLSX.read(data, { type: 'array' });
+      let allRows = [];
+
+      for (const sheetName of wb.SheetNames) {
+        const ws = wb.Sheets[sheetName];
+        const json = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
+        // Find header row
+        let headerIdx = -1;
+        for (let i = 0; i < Math.min(5, json.length); i++) {
+          const row = json[i];
+          if (row && row.some(c => String(c||'').includes('班級') || String(c||'').includes('姓名'))) {
+            headerIdx = i;
+            break;
+          }
+        }
+        const dataStart = headerIdx >= 0 ? headerIdx + 1 : 1;
+        const rows = json.slice(dataStart).map(r => Object.fromEntries(r.map((v, i) => [i, v])));
+        const parsed = parseRows(rows, sheetName);
+        allRows = allRows.concat(parsed);
+      }
+
+      if (allRows.length === 0) {
+        alert('未能解析到資料，請確認檔案格式符合說明。\n\n班級欄位需為 400–699 的數字（如 401、502、601）。');
+        document.getElementById('loadingMsg').style.display = 'none';
+        return;
+      }
+
+      ALL_DATA = allRows;
+      initApp();
+    } catch(err) {
+      alert('讀取失敗：' + err.message);
+      document.getElementById('loadingMsg').style.display = 'none';
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// CSV fallback or drag
+document.addEventListener('DOMContentLoaded', () => {
+  const dz = document.getElementById('dropZone');
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+  dz.addEventListener('drop', e => {
+    e.preventDefault();
+    dz.classList.remove('drag-over');
+    const f = e.dataTransfer.files[0];
+    if (f) handleFile(f);
+  });
+});
+
+// ==================== APP INIT ====================
+function initApp() {
+  document.getElementById('loadingMsg').style.display = 'none';
+  document.getElementById('uploadScreen').style.display = 'none';
+  document.getElementById('appScreen').style.display = 'block';
+
+  const total = ALL_DATA.length;
+  document.getElementById('appTitle').textContent = '體適能常模對照 — ' + fileName;
+  document.getElementById('appMeta').textContent =
+    `共 ${total} 位學生　測驗基準日：2026/03/01　（可調整出生年月日基準）`;
+
+  currentGrade = 'all';
+  document.querySelectorAll('.tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.grade === 'all');
+  });
+  populateClsFilter();
+  render();
+}
+
+function resetApp() {
+  ALL_DATA = [];
+  fileName = '';
+  currentGrade = 'all';
+  document.getElementById('uploadScreen').style.display = 'flex';
+  document.getElementById('appScreen').style.display = 'none';
+  document.getElementById('fileInput').value = '';
+}
+
+function setGrade(el) {
+  currentGrade = el.dataset.grade;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  populateClsFilter();
+  render();
+}
+
+function gradeMatch(r) {
+  if (currentGrade === 'all') return true;
+  return r.cls && r.cls[0] === currentGrade;
+}
+
+function populateClsFilter() {
+  const sel = document.getElementById('clsFilter');
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">全部班級</option>';
+  const classes = [...new Set(ALL_DATA.filter(gradeMatch).map(r => r.cls))].sort();
+  classes.forEach(c => {
+    const o = document.createElement('option');
+    o.value = c; o.textContent = c + '班';
+    sel.appendChild(o);
+  });
+  if (classes.includes(prev)) sel.value = prev;
+}
+
+// ==================== RENDER ====================
+function render() {
+  const cls    = document.getElementById('clsFilter').value;
+  const gender = document.getElementById('genderFilter').value;
+  const prF    = document.getElementById('prFilter').value;
+  const hideNS = document.getElementById('hideNoScore').checked;
+
+  let data = ALL_DATA.filter(gradeMatch);
+  if (cls)    data = data.filter(r => r.cls === cls);
+  if (gender) data = data.filter(r => r.gender === gender);
+  if (hideNS) data = data.filter(r => r.bend !== null || r.situp !== null || r.jump !== null || r.run !== null);
+
+  if (prF) {
+    data = data.filter(r => {
+      const k = r.gender + r.age;
+      const prs = [];
+      if (r.bend  !== null && NORM.bend[k])  prs.push(getPR(r.bend,  NORM.bend[k],  true).num);
+      if (r.situp !== null && NORM.situp[k]) prs.push(getPR(r.situp, NORM.situp[k], true).num);
+      if (r.jump  !== null && NORM.jump[k])  prs.push(getPR(r.jump,  NORM.jump[k],  true).num);
+      if (r.run   !== null && NORM.run[k])   prs.push(getPR(r.run,   NORM.run[k],  false).num);
+      if (prs.length === 0) return false;
+      if (prF === 'low')     return prs.some(p => p < 25);
+      if (prF === 'all-low') return prs.every(p => p < 25);
+      if (prF === 'high')    return prs.every(p => p >= 75);
+      return true;
+    });
+  }
+
+  updateStats(data);
+
+  const tbody = document.getElementById('tbody');
+  if (data.length === 0) {
+    tbody.innerHTML = '';
+    document.getElementById('noData').style.display = 'block';
+    return;
+  }
+  document.getElementById('noData').style.display = 'none';
+
+  tbody.innerHTML = data.map(r => {
+    const k = r.gender + (r.age || '');
+    return `<tr>
+      <td>${r.cls}</td>
+      <td>${r.no}</td>
+      <td class="tname">${r.name}</td>
+      <td>${r.gender}</td>
+      <td>${r.age || '?'}</td>
+      ${prHTML(r.bend,  k, 'bend')}
+      ${prHTML(r.situp, k, 'situp')}
+      ${prHTML(r.jump,  k, 'jump')}
+      ${prHTML(r.run,   k, 'run')}
+    </tr>`;
+  }).join('');
+}
+
+function updateStats(data) {
+  const total = data.length;
+  const hasScore = data.filter(r => r.bend !== null || r.situp !== null).length;
+  let lowCnt = 0, highCnt = 0;
+  data.forEach(r => {
+    const k = r.gender + r.age;
+    const prs = [];
+    if (r.bend  !== null && NORM.bend[k])  prs.push(getPR(r.bend,  NORM.bend[k],  true).num);
+    if (r.situp !== null && NORM.situp[k]) prs.push(getPR(r.situp, NORM.situp[k], true).num);
+    if (r.jump  !== null && NORM.jump[k])  prs.push(getPR(r.jump,  NORM.jump[k],  true).num);
+    if (r.run   !== null && NORM.run[k])   prs.push(getPR(r.run,   NORM.run[k],  false).num);
+    if (prs.length > 0 && prs.some(p => p < 25))   lowCnt++;
+    if (prs.length > 0 && prs.every(p => p >= 75)) highCnt++;
+  });
+  document.getElementById('statsBar').innerHTML = `
+    <div class="stat-card"><div class="val">${total}</div><div class="lbl">顯示人數</div></div>
+    <div class="stat-card"><div class="val">${hasScore}</div><div class="lbl">已填成績</div></div>
+    <div class="stat-card warn"><div class="val">${lowCnt}</div><div class="lbl">任一項 &lt;25th</div></div>
+    <div class="stat-card good"><div class="val">${highCnt}</div><div class="lbl">四項 ≥75th</div></div>
+  `;
+}
+</script>
+</body>
+</html>
