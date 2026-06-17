@@ -279,6 +279,7 @@ td.tname { text-align: left; }
     <label>顯示：
       <select id="prFilter" onchange="render()">
         <option value="">全部學生</option>
+        <option value="nodata">沒有資料（可填入）</option>
         <option value="fail">未及格（任一項 &lt; 25th）</option>
         <option value="allfail">四項均 &lt; 25th</option>
         <option value="pass">全部及格（四項均 ≥ 25th）</option>
@@ -596,7 +597,8 @@ function render() {
   if(gender) data=data.filter(r=>r.gender===gender);
   if(hideNS) data=data.filter(r=>r.bend!==null||r.situp!==null||r.jump!==null||r.run!==null);
 
-  if(prF==='fail')    data=data.filter(r=>!isPass(r)&&r.age);
+  if(prF==='nodata')  data=data.filter(r=>r.bend===null&&r.situp===null&&r.jump===null&&r.run===null);
+  else if(prF==='fail')    data=data.filter(r=>!isPass(r)&&r.age);
   else if(prF==='allfail') data=data.filter(r=>{ const k=r.gender+r.age; if(!k)return false; const prs=[]; ['bend','situp','jump'].forEach(t=>{ if(r[t]!==null&&NORM[t][k]) prs.push(getPR(r[t],NORM[t][k],true).num); }); if(r.run!==null&&NORM.run[k]) prs.push(getPR(r.run,NORM.run[k],false).num); return prs.length>0&&prs.every(p=>p<25); });
   else if(prF==='pass') data=data.filter(r=>isPass(r));
   else if(prF==='high') data=data.filter(r=>{ const k=r.gender+r.age; if(!k)return false; const prs=[]; ['bend','situp','jump'].forEach(t=>{ if(r[t]!==null&&NORM[t][k]) prs.push(getPR(r[t],NORM[t][k],true).num); }); if(r.run!==null&&NORM.run[k]) prs.push(getPR(r.run,NORM.run[k],false).num); return prs.length===4&&prs.every(p=>p>=75); });
@@ -627,8 +629,11 @@ function render() {
 
 function scoreCell(r,field,k,type,hb) {
   const v=r[field];
-  const scoreDisplay=v===null?'—':v;
-  if(v===null) return `<td class="pr-na">—</td><td class="pr-na">—</td>`;
+  if(v===null) {
+    if(editMode) return `<td><input class="edit-input" type="number" placeholder="—" data-id="${r.id}" data-field="${field}" onchange="updateScore(this)" min="0"></td><td class="pr-na">—</td>`;
+    return `<td class="pr-na">—</td><td class="pr-na">—</td>`;
+  }
+  const scoreDisplay=v;
   const nvals=NORM[type][k]; if(!nvals) return `<td>${scoreDisplay}</td><td class="pr-na">?</td>`;
   const pr=getPR(v,nvals,hb);
   const cls=prCls(pr?pr.num:null);
@@ -640,7 +645,10 @@ function scoreCell(r,field,k,type,hb) {
 
 function runCell(r,k) {
   const v=r.run;
-  if(v===null) return `<td class="pr-na">—</td><td class="pr-na">—</td>`;
+  if(v===null) {
+    if(editMode) return `<td><input class="edit-input run-input" type="number" step="0.01" placeholder="分.秒" data-id="${r.id}" data-field="run" onchange="updateScore(this)" min="0"></td><td class="pr-na">—</td>`;
+    return `<td class="pr-na">—</td><td class="pr-na">—</td>`;
+  }
   const nvals=NORM.run[k]; if(!nvals) return `<td>${secToDisplay(v)}</td><td class="pr-na">?</td>`;
   const pr=getPR(v,nvals,false);
   const cls=prCls(pr?pr.num:null);
