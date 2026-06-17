@@ -217,6 +217,8 @@ td.tname { text-align: left; }
     </div>
     <div class="topbar-btns">
       <button class="btn btn-orange" id="editModeBtn" onclick="toggleEditMode()">✏️ 調整未及格成績</button>
+      <button class="btn btn-ghost" id="loadBasicBtn" onclick="document.getElementById('basicFileInputApp').click()" title="匯入含身分證字號的學生基本資料 xlsx">📋 匯入基本資料<span id="basicLoadedBadge" style="display:none;margin-left:6px;background:#22c55e;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px">✓</span></button>
+      <input type="file" id="basicFileInputApp" accept=".xlsx,.xlsm" style="display:none" onchange="handleBasicFile(this.files[0], 'app')">
       <button class="btn btn-blue" onclick="exportMinistryFormat()">📤 匯出教育部格式</button>
       <button class="btn btn-ghost" onclick="resetApp()">↩ 重新匯入</button>
     </div>
@@ -656,7 +658,7 @@ function updateEditedCount() {
 // ==================== 學生基本資料 ====================
 let BASIC_DATA = {}; // key: 學號, value: {idNum, birth}
 
-function handleBasicFile(file) {
+function handleBasicFile(file, ctx) {
   const reader = new FileReader();
   reader.onload = e => {
     try {
@@ -684,9 +686,13 @@ function handleBasicFile(file) {
         };
       }
       const count = Object.keys(BASIC_DATA).length;
+      // 更新上傳畫面狀態文字
       const statusEl = document.getElementById('basicFileStatus');
       if(statusEl) statusEl.textContent = `✓ 已載入 ${count} 筆學生基本資料`;
-      alert(`基本資料載入完成：${count} 筆`);
+      // 更新主畫面徽章
+      const badge = document.getElementById('basicLoadedBadge');
+      if(badge) badge.style.display='inline';
+      if(ctx==='app') alert(`基本資料載入完成：${count} 筆\n現在可按「匯出教育部格式」下載。`);
     } catch(err) { alert('讀取失敗：'+err.message); }
   };
   reader.readAsArrayBuffer(file);
