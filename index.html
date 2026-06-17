@@ -221,7 +221,9 @@ td.tname { text-align: left; }
       <input type="file" id="basicFileInputApp" accept=".xlsx,.xlsm" style="display:none" onchange="handleBasicFile(this.files[0], 'app')">
       <button class="btn btn-ghost" onclick="document.getElementById('hwFileInputApp').click()" title="匯入含身高體重的 xlsx">⚖️ 匯入身高體重<span id="hwLoadedBadge" style="display:none;margin-left:6px;background:#22c55e;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px">✓</span></button>
       <input type="file" id="hwFileInputApp" accept=".xlsx,.xlsm" style="display:none" onchange="handleHwFile(this.files[0])">
-      <button class="btn btn-blue" onclick="exportMinistryFormat()">📤 匯出教育部格式</button>
+      <button class="btn btn-ghost" onclick="openAutoAdjModal()">🎯 自動調整及格率</button>
+      <button class="btn btn-blue" onclick="exportMinistryFormat()">📤 匯出體適能格式</button>
+      <button class="btn btn-blue" onclick="exportHWFormat()">📤 匯出身高體重格式</button>
       <button class="btn btn-ghost" onclick="resetApp()">↩ 重新匯入</button>
     </div>
   </div>
@@ -298,6 +300,45 @@ td.tname { text-align: left; }
   <button class="btn btn-blue" onclick="downloadData()">下載 xlsx</button>
   <span class="dl-edited-count" id="dlEditedCount"></span>
   <button class="btn btn-ghost" style="background:#eee;color:#555;margin-left:auto" onclick="exitEditMode()">✖ 結束調整</button>
+</div>
+
+<!-- 自動調整及格率 Modal -->
+<div id="autoAdjModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:300;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:12px;padding:28px;width:420px;max-width:92vw;box-shadow:0 8px 32px rgba(0,0,0,.18)">
+    <h3 style="margin:0 0 8px;font-size:16px;color:#1a3a5c">🎯 自動調整及格率</h3>
+    <p style="font-size:12px;color:#6b7280;margin:0 0 18px">系統優先調整「最接近及格」的學生，將不足 25th 的項目設為最低門檻值。<br>已調整的學生會以黃色外框標示。</p>
+    <div style="display:grid;gap:12px">
+      <div id="adjRow4" style="display:flex;align-items:center;gap:10px">
+        <span style="width:60px;font-size:14px;color:#374151">四年級</span>
+        <span style="font-size:12px;color:#6b7280" id="adjCur4">—</span>
+        <span style="font-size:12px;color:#9ca3af">→ 目標</span>
+        <input type="number" id="adjTarget4" min="0" max="100" placeholder="%" style="width:72px;padding:5px 8px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;text-align:center">
+        <span style="font-size:12px;color:#9ca3af">%</span>
+        <span style="font-size:12px;color:#6b7280" id="adjNeed4"></span>
+      </div>
+      <div id="adjRow5" style="display:flex;align-items:center;gap:10px">
+        <span style="width:60px;font-size:14px;color:#374151">五年級</span>
+        <span style="font-size:12px;color:#6b7280" id="adjCur5">—</span>
+        <span style="font-size:12px;color:#9ca3af">→ 目標</span>
+        <input type="number" id="adjTarget5" min="0" max="100" placeholder="%" style="width:72px;padding:5px 8px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;text-align:center">
+        <span style="font-size:12px;color:#9ca3af">%</span>
+        <span style="font-size:12px;color:#6b7280" id="adjNeed5"></span>
+      </div>
+      <div id="adjRow6" style="display:flex;align-items:center;gap:10px">
+        <span style="width:60px;font-size:14px;color:#374151">六年級</span>
+        <span style="font-size:12px;color:#6b7280" id="adjCur6">—</span>
+        <span style="font-size:12px;color:#9ca3af">→ 目標</span>
+        <input type="number" id="adjTarget6" min="0" max="100" placeholder="%" style="width:72px;padding:5px 8px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;text-align:center">
+        <span style="font-size:12px;color:#9ca3af">%</span>
+        <span style="font-size:12px;color:#6b7280" id="adjNeed6"></span>
+      </div>
+    </div>
+    <p style="font-size:11px;color:#9ca3af;margin:14px 0 0">留空的年級不調整。目標若低於現有及格率，也不調整。</p>
+    <div style="display:flex;gap:8px;margin-top:18px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closeAutoAdjModal()">取消</button>
+      <button class="btn btn-blue" onclick="applyAutoAdj()">套用調整</button>
+    </div>
+  </div>
 </div>
 
 <div id="loadingMsg" style="display:none;position:fixed;inset:0;background:rgba(255,255,255,.9);align-items:center;justify-content:center;font-size:16px;color:#1a3a5c;z-index:999;">
@@ -729,9 +770,14 @@ function handleHwFile(file) {
         if(r.includes('學號') && r.includes('身高') && r.includes('體重')) { hdrRow=i; break; }
       }
       const hdr = rows[hdrRow].map(c=>String(c).trim());
-      const sidIdx = hdr.indexOf('學號');
-      const hIdx   = hdr.indexOf('身高');
-      const wIdx   = hdr.indexOf('體重');
+      const sidIdx  = hdr.indexOf('學號');
+      const hIdx    = hdr.indexOf('身高');
+      const wIdx    = hdr.indexOf('體重');
+      const gradeIdx= hdr.indexOf('年級');
+      const clsIdx  = hdr.indexOf('班級');
+      const noIdx   = hdr.indexOf('座號');
+      const nameIdx = hdr.indexOf('姓名');
+      const genIdx  = hdr.indexOf('性別');
       HW_DATA = {};
       for(let i=hdrRow+1; i<rows.length; i++) {
         const r = rows[i];
@@ -739,9 +785,16 @@ function handleHwFile(file) {
         if(!sid || sid===' ') continue;
         const h = parseFloat(r[hIdx]);
         const w = parseFloat(r[wIdx]);
+        const grade = parseInt(r[gradeIdx]);
+        const cls   = parseInt(r[clsIdx]);
         HW_DATA[sid] = {
           height: isNaN(h)?'':Math.round(h*10)/10,
-          weight: isNaN(w)?'':Math.round(w*10)/10
+          weight: isNaN(w)?'':Math.round(w*10)/10,
+          grade:  isNaN(grade)?null:grade,
+          cls:    (!isNaN(grade)&&!isNaN(cls))?String(grade*100+cls):null,
+          no:     parseInt(r[noIdx])||0,
+          name:   String(r[nameIdx]||'').trim(),
+          gender: String(r[genIdx]||'').trim()
         };
       }
       const count = Object.keys(HW_DATA).length;
@@ -810,6 +863,112 @@ function exportMinistryFormat() {
   ws['!cols']=[12,8,6,10,12,8,14,10,8,8,10,10,10,14,10].map(w=>({wch:w}));
   XLSX.utils.book_append_sheet(wb, ws, '體適能上傳資料');
   XLSX.writeFile(wb, `體適能教育部上傳格式_${testDateRoc}.xlsx`);
+}
+
+// ==================== 匯出身高體重格式（1-6年級）====================
+function exportHWFormat() {
+  if(!Object.keys(HW_DATA).length){ alert('請先匯入身高體重資料'); return; }
+  const rocY=TEST_DATE.getFullYear()-1911;
+  const testDateRoc=`${rocY}${String(TEST_DATE.getMonth()+1).padStart(2,'0')}${String(TEST_DATE.getDate()).padStart(2,'0')}`;
+  const entries=Object.entries(HW_DATA)
+    .filter(([,d])=>d.grade>=1&&d.grade<=6&&d.cls)
+    .sort(([,a],[,b])=>a.cls.localeCompare(b.cls)||a.no-b.no);
+  const dataRows=entries.map(([sid,d])=>{
+    const basic=BASIC_DATA[sid]||{};
+    const birth=basic.birth||'';
+    const birthStr=birth?String(Math.round(Number(birth))).padStart(7,'0'):'';
+    return [testDateRoc,'國小',d.grade,d.cls,sid,d.gender==='男'?1:2,basic.idNum||'',birthStr,d.height,d.weight,'','','','',''];
+  });
+  const wsData=[
+    ['注意事項：本檔案由體適能常模對照工具自動產生（身高體重格式，含1-6年級）'],
+    ['體適能測驗欄位留空，僅含身高體重'],
+    ['性別：男=1，女=2；生日以民國年7碼（yyymmdd）填入'],
+    [Object.keys(BASIC_DATA).length?'✓ 身分證字號已從學生基本資料匯入':'⚠ 未載入學生基本資料，身分證字號欄位空白'],
+    [],[],[],[],[],[],[],[],[],
+    ['學生基本資料','','','','','','','','體適能檢測資料'],
+    ['測驗日期\n（民國年月份日期）','學校類別','*年級','*班級名稱\n（需與系統設定一致）','*學號或座號','*性別\n（男：1、女：2）','*身分證字號','*生日\n（民國年月份日期）','身高\n（公分）','體重\n（公斤）','坐姿體前彎\n（公分）','立定跳遠\n（公分）','仰臥捲腹\n（次數）','800/1600公尺跑走\n（分.秒）','漸速耐力跑\n（總趟數）'],
+    [],...dataRows];
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.aoa_to_sheet(wsData);
+  ws['!cols']=[12,8,6,10,12,8,14,10,8,8,10,10,10,14,10].map(w=>({wch:w}));
+  XLSX.utils.book_append_sheet(wb,ws,'身高體重上傳資料');
+  XLSX.writeFile(wb,`教育部身高體重上傳格式_${testDateRoc}.xlsx`);
+}
+
+// ==================== 自動調整及格率 ====================
+const P25_IDX = 4; // NORM 陣列中 index 4 = 最低及格門檻（getPR 回傳 25th）
+
+function gradePassInfo(grade) {
+  const d=ALL_DATA.filter(r=>r.cls[0]===grade&&r.age&&r.bend!==null&&r.situp!==null&&r.jump!==null&&r.run!==null);
+  const pass=d.filter(r=>isPass(r));
+  return {total:d.length, pass:pass.length, pct:d.length?Math.round(pass.length/d.length*100):0, data:d};
+}
+
+function openAutoAdjModal() {
+  ['4','5','6'].forEach(g=>{
+    const {total,pass,pct}=gradePassInfo(g);
+    document.getElementById('adjCur'+g).textContent=total?`目前 ${pct}%（${pass}/${total}）`:'無資料';
+    document.getElementById('adjTarget'+g).value='';
+    document.getElementById('adjNeed'+g).textContent='';
+  });
+  document.getElementById('autoAdjModal').style.display='flex';
+}
+function closeAutoAdjModal(){ document.getElementById('autoAdjModal').style.display='none'; }
+
+function countFail(r){
+  const k=r.gender+r.age; let n=0;
+  if(NORM.bend[k]  &&getPR(r.bend, NORM.bend[k], true).num <25) n++;
+  if(NORM.situp[k] &&getPR(r.situp,NORM.situp[k],true).num <25) n++;
+  if(NORM.jump[k]  &&getPR(r.jump, NORM.jump[k], true).num <25) n++;
+  if(NORM.run[k]   &&getPR(r.run,  NORM.run[k],  false).num<25) n++;
+  return n;
+}
+function sumPRVal(r){
+  const k=r.gender+r.age; let s=0;
+  if(NORM.bend[k])  s+=getPR(r.bend, NORM.bend[k], true).num ||0;
+  if(NORM.situp[k]) s+=getPR(r.situp,NORM.situp[k],true).num ||0;
+  if(NORM.jump[k])  s+=getPR(r.jump, NORM.jump[k], true).num ||0;
+  if(NORM.run[k])   s+=getPR(r.run,  NORM.run[k],  false).num||0;
+  return s;
+}
+function adjustToPass(r){
+  const k=r.gender+r.age;
+  if(NORM.bend[k]  &&getPR(r.bend, NORM.bend[k], true).num <25) r.bend =NORM.bend[k][P25_IDX];
+  if(NORM.situp[k] &&getPR(r.situp,NORM.situp[k],true).num <25) r.situp=NORM.situp[k][P25_IDX];
+  if(NORM.jump[k]  &&getPR(r.jump, NORM.jump[k], true).num <25) r.jump =NORM.jump[k][P25_IDX];
+  if(NORM.run[k]   &&getPR(r.run,  NORM.run[k],  false).num<25) r.run  =NORM.run[k][P25_IDX];
+}
+
+function applyAutoAdj(){
+  let totalAdj=0;
+  ['4','5','6'].forEach(g=>{
+    const val=document.getElementById('adjTarget'+g).value.trim();
+    if(!val) return;
+    const targetPct=parseFloat(val);
+    if(isNaN(targetPct)||targetPct<0||targetPct>100) return;
+    const {total,pass,data}=gradePassInfo(g);
+    if(!total) return;
+    const targetCount=Math.ceil(total*targetPct/100);
+    if(targetCount<=pass) return;
+    const needed=targetCount-pass;
+    const failing=data.filter(r=>!isPass(r));
+    // 優先調整：失敗項目最少 → PR 總分最高（最接近及格）
+    failing.sort((a,b)=>countFail(a)-countFail(b)||sumPRVal(b)-sumPRVal(a));
+    for(let i=0;i<Math.min(needed,failing.length);i++){
+      adjustToPass(failing[i]);
+      editedIds.add(failing[i].id);
+      totalAdj++;
+    }
+  });
+  closeAutoAdjModal();
+  if(totalAdj>0){
+    render(); updatePassBar();
+    document.getElementById('dlPanel').classList.add('show');
+    updateEditedCount();
+    alert(`已自動調整 ${totalAdj} 位學生成績，以黃色外框標示。`);
+  } else {
+    alert('無需調整（目標及格率已達到，或未填寫目標）。');
+  }
 }
 
 // ==================== 下載 ====================
