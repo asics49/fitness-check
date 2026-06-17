@@ -195,6 +195,16 @@ td.tname { text-align: left; }
       <b>800公尺跑走：</b>分.秒格式，例如 3.17（3分17秒）<br>
       <b>及格標準：</b>四項均達 25th 百分位以上
     </div>
+
+    <div style="margin-top:20px;border-top:1px solid #e5e7eb;padding-top:16px">
+      <p style="font-size:13px;font-weight:600;color:#374151;margin:0 0 4px">步驟 2（選填）：上傳學生基本資料</p>
+      <p style="font-size:12px;color:#6b7280;margin:0 0 10px">含身分證字號，用於匯出教育部上傳格式（欄位：班級、座號、學號、身分證、姓名、性別、血型、出生年月日）</p>
+      <div style="display:flex;align-items:center;gap:10px">
+        <button class="btn btn-ghost" onclick="document.getElementById('basicFileInput').click()">選擇基本資料 xlsx</button>
+        <input type="file" id="basicFileInput" accept=".xlsx,.xlsm" style="display:none" onchange="handleBasicFile(this.files[0])">
+        <span id="basicFileStatus" style="font-size:12px;color:#6b7280">尚未載入（可略過）</span>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -207,6 +217,7 @@ td.tname { text-align: left; }
     </div>
     <div class="topbar-btns">
       <button class="btn btn-orange" id="editModeBtn" onclick="toggleEditMode()">✏️ 調整未及格成績</button>
+      <button class="btn btn-blue" onclick="exportMinistryFormat()">📤 匯出教育部格式</button>
       <button class="btn btn-ghost" onclick="resetApp()">↩ 重新匯入</button>
     </div>
   </div>
@@ -442,10 +453,12 @@ function initApp(fname) {
   populateClsFilter(); updatePassBar(); render();
 }
 function resetApp() {
-  ALL_DATA=[]; origFile=null; editMode=false; editedIds=new Set();
+  ALL_DATA=[]; origFile=null; editMode=false; editedIds=new Set(); BASIC_DATA={};
   document.getElementById('uploadScreen').style.display='flex';
   document.getElementById('appScreen').style.display='none';
   document.getElementById('fileInput').value='';
+  document.getElementById('basicFileInput').value='';
+  document.getElementById('basicFileStatus').textContent='尚未載入（可略過）';
 }
 function setGrade(el) {
   currentGrade=el.dataset.grade;
@@ -638,6 +651,103 @@ function updateScore(input) {
 }
 function updateEditedCount() {
   document.getElementById('dlEditedCount').textContent=editedIds.size>0?`已調整 ${editedIds.size} 位學生成績`:'';
+}
+
+// ==================== 學生基本資料 ====================
+let BASIC_DATA = {}; // key: 學號, value: {idNum, birth}
+
+function handleBasicFile(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(e.target.result, {type:'array'});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+      let hdrRow = -1;
+      for(let i=0; i<rows.length; i++) {
+        const r = rows[i].map(c=>String(c).trim());
+        if(r.includes('學號') && r.includes('身分證')) { hdrRow=i; break; }
+      }
+      if(hdrRow<0) { alert('無法識別欄位，請確認檔案含「學號」與「身分證」欄位'); return; }
+      const hdr = rows[hdrRow].map(c=>String(c).trim());
+      const sidIdx = hdr.indexOf('學號');
+      const idIdx  = hdr.indexOf('身分證');
+      const birthIdx = hdr.indexOf('出生年月日');
+      BASIC_DATA = {};
+      for(let i=hdrRow+1; i<rows.length; i++) {
+        const r = rows[i];
+        const sid = String(r[sidIdx]||'').replace(/\.0$/,'').trim();
+        if(!sid) continue;
+        BASIC_DATA[sid] = {
+          idNum: String(r[idIdx]||'').trim(),
+          birth: r[birthIdx]||''
+        };
+      }
+      const count = Object.keys(BASIC_DATA).length;
+      const statusEl = document.getElementById('basicFileStatus');
+      if(statusEl) statusEl.textContent = `✓ 已載入 ${count} 筆學生基本資料`;
+      alert(`基本資料載入完成：${count} 筆`);
+    } catch(err) { alert('讀取失敗：'+err.message); }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ==================== 匯出教育部格式 ====================
+function exportMinistryFormat() {
+  if(!ALL_DATA||!ALL_DATA.length) { alert('請先載入體適能成績檔案'); return; }
+
+  // 測驗日期轉民國年7碼
+  const rocY = TEST_DATE.getFullYear()-1911;
+  const testDateRoc = `${rocY}${String(TEST_DATE.getMonth()+1).padStart(2,'0')}${String(TEST_DATE.getDate()).padStart(2,'0')}`;
+
+  const data = ALL_DATA
+    .filter(r=>r.bend!==null||r.situp!==null||r.jump!==null||r.run!==null)
+    .sort((a,b)=>a.cls.localeCompare(b.cls)||a.no-b.no);
+
+  const dataRows = data.map(r=>{
+    const basic = BASIC_DATA[r.sid]||{};
+    const birth = basic.birth||r.birth||'';
+    const birthStr = birth ? String(Math.round(Number(birth))).padStart(7,'0') : '';
+    return [
+      testDateRoc,
+      '國小',
+      parseInt(r.cls[0]),
+      r.cls,
+      r.sid,
+      r.gender==='男'?1:2,
+      basic.idNum||'',
+      birthStr,
+      '', // 身高
+      '', // 體重
+      r.bend!==null?r.bend:'',
+      r.jump!==null?r.jump:'',
+      r.situp!==null?r.situp:'', // 仰臥起坐 → 仰臥捲腹欄
+      secToMss(r.run)||'',
+      ''  // 漸速耐力跑
+    ];
+  });
+
+  // 前16列：說明 + 標題（第17列起為資料）
+  const noBasic = Object.keys(BASIC_DATA).length===0;
+  const wsData = [
+    ['注意事項：本檔案由體適能常模對照工具自動產生'],
+    ['性別欄：男生填1，女生填2'],
+    ['生日以民國年7碼（yyymmdd）填入'],
+    [noBasic?'⚠ 身分證字號欄位空白（未載入學生基本資料）':'✓ 身分證字號已從學生基本資料匯入'],
+    ['仰臥捲腹欄位：本校測驗項目為仰臥起坐，數值已填入，請確認是否符合上傳規格'],
+    ['800公尺跑走：分.秒格式，例如 3.20（3分20秒）'],
+    [],[],[],[],[],[],[],
+    ['學生基本資料','','','','','','','','體適能檢測資料'],
+    ['測驗日期\n（民國年月份日期）','學校類別','*年級','*班級名稱\n（需與系統設定一致）','*學號或座號','*性別\n（男：1、女：2）','*身分證字號','*生日\n（民國年月份日期）','身高\n（公分）','體重\n（公斤）','坐姿體前彎\n（公分）','立定跳遠\n（公分）','仰臥捲腹\n（次數）','800/1600公尺跑走\n（分.秒）','漸速耐力跑\n（總趟數）'],
+    [], // row 16（空白）→ 資料從第17列開始
+    ...dataRows
+  ];
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  ws['!cols']=[12,8,6,10,12,8,14,10,8,8,10,10,10,14,10].map(w=>({wch:w}));
+  XLSX.utils.book_append_sheet(wb, ws, '體適能上傳資料');
+  XLSX.writeFile(wb, `體適能教育部上傳格式_${testDateRoc}.xlsx`);
 }
 
 // ==================== 下載 ====================
