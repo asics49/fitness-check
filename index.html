@@ -219,6 +219,8 @@ td.tname { text-align: left; }
       <button class="btn btn-orange" id="editModeBtn" onclick="toggleEditMode()">✏️ 調整未及格成績</button>
       <button class="btn btn-ghost" id="loadBasicBtn" onclick="document.getElementById('basicFileInputApp').click()" title="匯入含身分證字號的學生基本資料 xlsx">📋 匯入基本資料<span id="basicLoadedBadge" style="display:none;margin-left:6px;background:#22c55e;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px">✓</span></button>
       <input type="file" id="basicFileInputApp" accept=".xlsx,.xlsm" style="display:none" onchange="handleBasicFile(this.files[0], 'app')">
+      <button class="btn btn-ghost" onclick="document.getElementById('hwFileInputApp').click()" title="匯入含身高體重的 xlsx">⚖️ 匯入身高體重<span id="hwLoadedBadge" style="display:none;margin-left:6px;background:#22c55e;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px">✓</span></button>
+      <input type="file" id="hwFileInputApp" accept=".xlsx,.xlsm" style="display:none" onchange="handleHwFile(this.files[0])">
       <button class="btn btn-blue" onclick="exportMinistryFormat()">📤 匯出教育部格式</button>
       <button class="btn btn-ghost" onclick="resetApp()">↩ 重新匯入</button>
     </div>
@@ -455,12 +457,16 @@ function initApp(fname) {
   populateClsFilter(); updatePassBar(); render();
 }
 function resetApp() {
-  ALL_DATA=[]; origFile=null; editMode=false; editedIds=new Set(); BASIC_DATA={};
+  ALL_DATA=[]; origFile=null; editMode=false; editedIds=new Set(); BASIC_DATA={}; HW_DATA={};
   document.getElementById('uploadScreen').style.display='flex';
   document.getElementById('appScreen').style.display='none';
   document.getElementById('fileInput').value='';
   document.getElementById('basicFileInput').value='';
+  document.getElementById('basicFileInputApp').value='';
+  document.getElementById('hwFileInputApp').value='';
   document.getElementById('basicFileStatus').textContent='尚未載入（可略過）';
+  document.getElementById('basicLoadedBadge').style.display='none';
+  document.getElementById('hwLoadedBadge').style.display='none';
 }
 function setGrade(el) {
   currentGrade=el.dataset.grade;
@@ -657,6 +663,7 @@ function updateEditedCount() {
 
 // ==================== 學生基本資料 ====================
 let BASIC_DATA = {}; // key: 學號, value: {idNum, birth}
+let HW_DATA = {};    // key: 學號, value: {height, weight}
 
 function handleBasicFile(file, ctx) {
   const reader = new FileReader();
@@ -698,6 +705,54 @@ function handleBasicFile(file, ctx) {
   reader.readAsArrayBuffer(file);
 }
 
+function handleHwFile(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(e.target.result, {type:'array'});
+      // 找含「身高」與「體重」欄位的工作表
+      let ws = null;
+      for(const name of wb.SheetNames) {
+        const s = wb.Sheets[name];
+        const rows = XLSX.utils.sheet_to_json(s, {header:1, defval:''});
+        for(const r of rows) {
+          const cells = r.map(c=>String(c).trim());
+          if(cells.includes('身高') && cells.includes('體重') && cells.includes('學號')) { ws=s; break; }
+        }
+        if(ws) break;
+      }
+      if(!ws) { alert('無法識別欄位，請確認檔案含「學號」、「身高」、「體重」欄位'); return; }
+      const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+      let hdrRow = -1;
+      for(let i=0; i<rows.length; i++) {
+        const r = rows[i].map(c=>String(c).trim());
+        if(r.includes('學號') && r.includes('身高') && r.includes('體重')) { hdrRow=i; break; }
+      }
+      const hdr = rows[hdrRow].map(c=>String(c).trim());
+      const sidIdx = hdr.indexOf('學號');
+      const hIdx   = hdr.indexOf('身高');
+      const wIdx   = hdr.indexOf('體重');
+      HW_DATA = {};
+      for(let i=hdrRow+1; i<rows.length; i++) {
+        const r = rows[i];
+        const sid = String(r[sidIdx]||'').replace(/\.0$/,'').trim();
+        if(!sid || sid===' ') continue;
+        const h = parseFloat(r[hIdx]);
+        const w = parseFloat(r[wIdx]);
+        HW_DATA[sid] = {
+          height: isNaN(h)?'':Math.round(h*10)/10,
+          weight: isNaN(w)?'':Math.round(w*10)/10
+        };
+      }
+      const count = Object.keys(HW_DATA).length;
+      const badge = document.getElementById('hwLoadedBadge');
+      if(badge) badge.style.display='inline';
+      alert(`身高體重載入完成：${count} 筆`);
+    } catch(err) { alert('讀取失敗：'+err.message); }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
 // ==================== 匯出教育部格式 ====================
 function exportMinistryFormat() {
   if(!ALL_DATA||!ALL_DATA.length) { alert('請先載入體適能成績檔案'); return; }
@@ -714,6 +769,7 @@ function exportMinistryFormat() {
     const basic = BASIC_DATA[r.sid]||{};
     const birth = basic.birth||r.birth||'';
     const birthStr = birth ? String(Math.round(Number(birth))).padStart(7,'0') : '';
+    const hw = HW_DATA[r.sid]||{};
     return [
       testDateRoc,
       '國小',
@@ -723,8 +779,8 @@ function exportMinistryFormat() {
       r.gender==='男'?1:2,
       basic.idNum||'',
       birthStr,
-      '', // 身高
-      '', // 體重
+      hw.height!==undefined?hw.height:'',
+      hw.weight!==undefined?hw.weight:'',
       r.bend!==null?r.bend:'',
       r.jump!==null?r.jump:'',
       r.situp!==null?r.situp:'', // 仰臥起坐 → 仰臥捲腹欄
