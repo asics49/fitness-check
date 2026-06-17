@@ -176,6 +176,34 @@ td.tname { text-align: left; }
 </head>
 <body>
 
+<!-- ===== PASSWORD SCREEN ===== -->
+<div id="pwScreen" style="display:none;position:fixed;inset:0;background:#f0f4f8;z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:12px;padding:40px 36px;width:320px;box-shadow:0 4px 24px rgba(0,0,0,.12);text-align:center">
+    <div style="font-size:36px;margin-bottom:12px">🔒</div>
+    <h2 style="font-size:18px;font-weight:600;color:#1a3a5c;margin:0 0 6px">體適能常模對照工具</h2>
+    <p style="font-size:13px;color:#6b7280;margin:0 0 24px">請輸入存取密碼</p>
+    <input type="password" id="pwInput" placeholder="密碼" onkeydown="if(event.key==='Enter')checkPw()"
+      style="width:100%;box-sizing:border-box;padding:10px 14px;border:1.5px solid #d1d5db;border-radius:8px;font-size:15px;outline:none;margin-bottom:12px">
+    <p id="pwError" style="font-size:12px;color:#dc2626;min-height:18px;margin:0 0 12px"></p>
+    <button onclick="checkPw()" style="width:100%;padding:10px;background:#1a3a5c;color:#fff;border:none;border-radius:8px;font-size:15px;cursor:pointer">進入</button>
+  </div>
+</div>
+<script>
+(function(){
+  const KEY='fitness_auth', PASS='nt@1980828';
+  function checkPw(){
+    const v=document.getElementById('pwInput').value;
+    if(v===PASS){ sessionStorage.setItem(KEY,'1'); document.getElementById('pwScreen').style.display='none'; }
+    else{ document.getElementById('pwError').textContent='密碼錯誤，請重試'; document.getElementById('pwInput').value=''; document.getElementById('pwInput').focus(); }
+  }
+  window.checkPw=checkPw;
+  if(sessionStorage.getItem(KEY)!=='1'){
+    document.getElementById('pwScreen').style.display='flex';
+    window.addEventListener('DOMContentLoaded',()=>document.getElementById('pwInput').focus());
+  }
+})();
+</script>
+
 <!-- ===== UPLOAD SCREEN ===== -->
 <div id="uploadScreen">
   <div class="upload-card">
