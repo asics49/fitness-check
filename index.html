@@ -488,7 +488,7 @@ function handleFile(file) {
             gender:String(get('性別')||'').trim(),
             birth, age,
             bend:  safeNum(get('坐姿體前彎')),
-            jump:  (v=>{if(v===null)return null; return v<10?Math.round(v*100):v;})(safeNum(get('立定跳遠'))),
+            jump:  (v=>{if(v===null)return null; if(v<10)return Math.round(v*100); if(v>300)return Math.round(v/10); return Math.round(v);})(safeNum(get('立定跳遠'))),
             situp: safeNum(get('仰臥起坐')),
             run:   runRaw!==null?runToSec(runRaw):null,
             // store originals for export
@@ -903,9 +903,9 @@ function exportMinistryFormat() {
       birthStr,
       hw.height!==undefined?hw.height:'',
       hw.weight!==undefined?hw.weight:'',
-      r.bend!==null?r.bend:'',
-      r.jump!==null?r.jump:'',
-      r.situp!==null?r.situp:'', // 仰臥起坐 → 仰臥捲腹欄
+      r.bend!==null?Math.round(r.bend):'',
+      r.jump!==null?Math.round(r.jump):'',
+      r.situp!==null?Math.round(r.situp):'', // 仰臥起坐 → 仰臥捲腹欄
       secToMss(r.run)||'',
       ''  // 漸速耐力跑
     ];
