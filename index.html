@@ -905,7 +905,7 @@ function exportMinistryFormat() {
       hw.weight!==undefined?hw.weight:'',
       r.bend!==null?Math.round(r.bend):'',
       r.jump!==null?Math.round(r.jump):'',
-      r.situp!==null?Math.round(r.situp):'', // 仰臥起坐 → 仰臥捲腹欄
+      r.situp!==null?Math.min(Math.round(r.situp),72):'', // 仰臥起坐 → 仰臥捲腹欄，教育部上限72
       secToMss(r.run)||'',
       ''  // 漸速耐力跑
     ];
