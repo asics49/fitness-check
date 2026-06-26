@@ -488,7 +488,7 @@ function handleFile(file) {
             gender:String(get('性別')||'').trim(),
             birth, age,
             bend:  safeNum(get('坐姿體前彎')),
-            jump:  safeNum(get('立定跳遠')),
+            jump:  (v=>{if(v===null)return null; return v<10?Math.round(v*100):v;})(safeNum(get('立定跳遠'))),
             situp: safeNum(get('仰臥起坐')),
             run:   runRaw!==null?runToSec(runRaw):null,
             // store originals for export
