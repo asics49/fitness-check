@@ -422,6 +422,12 @@ function secToMss(sec) {
   const m=Math.floor(sec/60), s=sec%60;
   return parseFloat(m+'.'+String(s).padStart(2,'0'));
 }
+function secToMssStr(sec) {
+  // seconds → 固定兩位小數字串（教育部格式：3.10 不能變 3.1，否則被判讀為3分1秒）
+  if(sec===null||sec===undefined) return '';
+  const m=Math.floor(sec/60), s=sec%60;
+  return m+'.'+String(s).padStart(2,'0');
+}
 function secToDisplay(sec) {
   if(sec===null||sec===undefined) return '—';
   const m=Math.floor(sec/60), s=sec%60;
@@ -612,19 +618,22 @@ function render() {
   if(!data.length){ tbody.innerHTML=''; document.getElementById('noData').style.display='block'; return; }
   document.getElementById('noData').style.display='none';
 
-  tbody.innerHTML=data.map(r=>{
-    const k=r.gender+(r.age||'');
-    const pass=r.age?isPass(r):null;
-    const passBadge=pass===null?'<span class="pr-na">—</span>':pass?'<span class="pass-badge">及格</span>':'<span class="fail-badge">未及格</span>';
-    const rowCls=(pass===false?'fail-row':'')+(editedIds.has(r.id)?' edited':'');
-    return `<tr class="${rowCls}" data-id="${r.id}">
-      <td>${r.cls}</td><td>${r.no}</td><td class="tname">${r.name}</td><td>${r.gender}</td><td>${r.age||'?'}</td><td>${passBadge}</td>
-      ${scoreCell(r,'bend',k,'bend',true)}
-      ${scoreCell(r,'situp',k,'situp',true)}
-      ${scoreCell(r,'jump',k,'jump',true)}
-      ${runCell(r,k)}
-    </tr>`;
-  }).join('');
+  tbody.innerHTML=data.map(r=>`<tr class="${rowClass(r)}" data-id="${r.id}">${rowInner(r)}</tr>`).join('');
+}
+
+function rowClass(r) {
+  const pass=r.age?isPass(r):null;
+  return (pass===false?'fail-row':'')+(editedIds.has(r.id)?' edited':'');
+}
+function rowInner(r) {
+  const k=r.gender+(r.age||'');
+  const pass=r.age?isPass(r):null;
+  const passBadge=pass===null?'<span class="pr-na">—</span>':pass?'<span class="pass-badge">及格</span>':'<span class="fail-badge">未及格</span>';
+  return `<td>${r.cls}</td><td>${r.no}</td><td class="tname">${r.name}</td><td>${r.gender}</td><td>${r.age||'?'}</td><td>${passBadge}</td>
+    ${scoreCell(r,'bend',k,'bend',true)}
+    ${scoreCell(r,'situp',k,'situp',true)}
+    ${scoreCell(r,'jump',k,'jump',true)}
+    ${runCell(r,k)}`;
 }
 
 function scoreCell(r,field,k,type,hb) {
@@ -703,37 +712,25 @@ function exitEditMode() {
 function updateScore(input) {
   const id=parseInt(input.dataset.id);
   const field=input.dataset.field;
-  const val=parseFloat(input.value);
+  let val=parseFloat(input.value);
   const r=ALL_DATA.find(r=>r.id===id);
   if(!r) return;
   if(field==='run') {
     r.run=runToSec(val);
-    r._origRun=val;
+    r._origRun=isNaN(val)?null:val;
+  } else if(field==='jump'&&!isNaN(val)) {
+    // 與匯入相同的單位自動修正：<10 視為公尺，>300 視為10倍誤入
+    r.jump=val<10?Math.round(val*100):val>300?Math.round(val/10):Math.round(val);
   } else {
     r[field]=isNaN(val)?null:val;
   }
   editedIds.add(id);
   updateEditedCount();
   updatePassBar();
-  // update PR cell next to this input
+  // 重建整列（成績有空欄時 PR 格數量不定，不能用固定索引更新）
   const tr=input.closest('tr');
-  const k=r.gender+(r.age||'');
-  if(field==='run') {
-    const pr=r.run!==null&&NORM.run[k]?getPR(r.run,NORM.run[k],false):null;
-    const prCell=tr.querySelectorAll('.pr-cell')[3];
-    if(prCell) { prCell.textContent=pr?pr.label:'?'; prCell.className='pr-cell '+prCls(pr?pr.num:null); }
-  } else {
-    const idx={bend:0,situp:1,jump:2}[field];
-    const nvals=NORM[field][k];
-    const pr=nvals?getPR(r[field],nvals,true):null;
-    const cells=tr.querySelectorAll('.pr-cell');
-    if(cells[idx]) { cells[idx].textContent=pr?pr.label:'?'; cells[idx].className='pr-cell '+prCls(pr?pr.num:null); }
-  }
-  // update pass badge
-  const passBadgeCell=tr.cells[5];
-  const pass=isPass(r);
-  passBadgeCell.innerHTML=pass?'<span class="pass-badge">及格</span>':'<span class="fail-badge">未及格</span>';
-  tr.className=(pass?'':' fail-row')+(editedIds.has(id)?' edited':'');
+  tr.className=rowClass(r);
+  tr.innerHTML=rowInner(r);
 }
 function updateEditedCount() {
   document.getElementById('dlEditedCount').textContent=editedIds.size>0?`已調整 ${editedIds.size} 位學生成績`:'';
@@ -906,7 +903,7 @@ function exportMinistryFormat() {
       r.bend!==null?Math.round(r.bend):'',
       r.jump!==null?Math.round(r.jump):'',
       r.situp!==null?Math.min(Math.round(r.situp),72):'', // 仰臥起坐 → 仰臥捲腹欄，教育部上限72
-      secToMss(r.run)||'',
+      secToMssStr(r.run),
       ''  // 漸速耐力跑
     ];
   });
@@ -1068,7 +1065,7 @@ function downloadData() {
     const rows=data.filter(r=>r.cls===cls).sort((a,b)=>a.no-b.no);
     const wsData=[HEADERS,...rows.map(r=>[
       parseInt(r.cls), r.no, r.sid, r.name, r.gender,
-      r.birth||'', r.bend||'', r.jump||'', r.situp||'', secToMss(r.run)||''
+      r.birth||'', r.bend!==null?r.bend:'', r.jump!==null?r.jump:'', r.situp!==null?r.situp:'', secToMss(r.run)
     ])];
     const ws=XLSX.utils.aoa_to_sheet(wsData);
     ws['!cols']=[{wch:6},{wch:6},{wch:10},{wch:8},{wch:6},{wch:12},{wch:10},{wch:10},{wch:10},{wch:12}];
